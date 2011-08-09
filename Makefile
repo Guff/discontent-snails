@@ -3,11 +3,11 @@ INSTALLDIR := $(DESTDIR)$(PREFIX)
 
 CC	:= gcc
 
-PKGS := allegro-5.0
+PKGS := allegro-5.0 jansson
 INCS := $(shell pkg-config --cflags $(PKGS))
 LIBS := $(shell pkg-config --libs $(PKGS)) -lchipmunk -lm
 
-CFLAGS   := -Wall -Wextra -std=gnu99 -I. $(INCS) $(CFLAGS)
+CFLAGS   := -Wall -Wextra -std=gnu99 -I. $(INCS) $(CFLAGS) $(DEBUG)
 CPPFLAGS := $(CPPFLAGS)
 DEBUG    := -g -DDEBUG
 LDFLAGS  := $(LIBS) $(LDFLAGS)

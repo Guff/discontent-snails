@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <allegro5/allegro.h>
+#include <allegro5/allegro_image.h>
 #include <chipmunk/chipmunk.h>
 
 #include "level.h"
@@ -100,8 +101,12 @@ void init_bodies(void) {
         
         body->bitmap = al_create_bitmap(40, 10);
         
+        ALLEGRO_BITMAP *texture = al_load_bitmap("data/wooden-block-40x10.png");
+        
         al_set_target_bitmap(body->bitmap);
-        al_clear_to_color(al_map_rgb(255, 255, 255));
+        al_draw_bitmap(texture, 0, 0, 0);
+        
+        al_free(texture);
         
         ptr_array_add(obstacles, body);
     }
@@ -138,12 +143,16 @@ int main(int argc, char **argv) {
     
     al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR | ALLEGRO_MIPMAP);
     
+    al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
+    al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
+    
     ALLEGRO_DISPLAY *display = al_create_display(WIDTH, HEIGHT);
     ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
     ALLEGRO_EVENT ev;
     ALLEGRO_TIMER *frames_timer = al_create_timer(1 / FPS);
     ALLEGRO_TIMER *phys_timer = al_create_timer(PHYSICS_STEP);
     
+    al_init_image_addon();
     al_install_keyboard();
     al_install_mouse();
     
@@ -212,6 +221,8 @@ int main(int argc, char **argv) {
                 break;
         }
     }
+    
+    al_shutdown_image_addon();
     
     return 0;
 }

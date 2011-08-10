@@ -44,3 +44,45 @@ void ptr_array_free(ptr_array_t *pta, bool free_all) {
     free(pta->data);
     free(pta);
 }
+
+table_t* table_new() {
+    table_t *tbl = malloc(sizeof(table_t));
+    tbl->keys = NULL;
+    tbl->vals = NULL;
+    tbl->len = 0;
+    return tbl;
+}
+
+void table_insert(table_t *tbl, const char *key, void *val) {
+    if (!tbl->len) {
+        tbl->keys = malloc(sizeof(char *));
+        tbl->vals = malloc(sizeof(void *));
+    } else {
+        tbl->keys = realloc(tbl->keys, sizeof(char *) * (tbl->len + 1));
+        tbl->vals = realloc(tbl->vals, sizeof(void *) * (tbl->len + 1));
+    }
+    tbl->keys[tbl->len] = strdup(key);
+    tbl->vals[tbl->len] = val;
+    tbl->len++;
+}
+
+void* table_lookup(table_t *tbl, const char *key) {
+    for (uint i = 0; i < tbl->len; i++) {
+        if (!strcmp(tbl->keys[i], key))
+            return tbl->vals[i];
+    }
+    return NULL;
+}
+
+void table_clear(table_t *tbl, bool free_all) {
+    if (free_all) {
+        for (uint i = 0; i < tbl->len; i++)
+            free(tbl->keys[i]);
+    }
+    
+    free(tbl->keys);
+    free(tbl->vals);
+    tbl->keys = NULL;
+    tbl->vals = NULL;
+    tbl->len = 0;
+}

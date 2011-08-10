@@ -1,3 +1,6 @@
+#ifndef DS_LEVEL_H
+#define DS_LEVEL_H
+
 #include "types.h"
 
 typedef struct {
@@ -19,3 +22,5 @@ typedef struct {
 
 void level_free(level_t *level);
 level_t* level_parse(const char *filename);
+
+#endif

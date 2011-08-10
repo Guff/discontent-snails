@@ -7,9 +7,9 @@ PKGS := allegro-5.0 allegro_image-5.0 jansson
 INCS := $(shell pkg-config --cflags $(PKGS))
 LIBS := $(shell pkg-config --libs $(PKGS)) -lchipmunk -lm
 
+DEBUG    := -g -DDEBUG
 CFLAGS   := -Wall -Wextra -std=gnu99 -I. $(INCS) $(CFLAGS) $(DEBUG)
 CPPFLAGS := $(CPPFLAGS)
-DEBUG    := -g -DDEBUG
 LDFLAGS  := $(LIBS) $(LDFLAGS)
 
 SRCS  := $(wildcard *.c)

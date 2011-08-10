@@ -7,6 +7,7 @@
 #include <chipmunk/chipmunk.h>
 
 #include "level.h"
+#include "textures.h"
 
 #define FPS             30.0
 #define PHYSICS_STEP    (1 / 100.0)
@@ -63,6 +64,8 @@ void init_world(void) {
 }
 
 void init_bodies(void) {
+    table_t *textures = textures_load();
+    
     rect = body_new();
     obstacles = ptr_array_new();
     
@@ -101,12 +104,18 @@ void init_bodies(void) {
         
         body->bitmap = al_create_bitmap(40, 10);
         
-        ALLEGRO_BITMAP *texture = al_load_bitmap("data/wooden-block-40x10.png");
+        ALLEGRO_BITMAP *texture;
+        
+        switch (obstacle->type) {
+            case OBSTACLE_TYPE_BLOCK:
+                texture = table_lookup(textures, texture_files[0]);
+                break;
+            default:
+                break;
+        }
         
         al_set_target_bitmap(body->bitmap);
         al_draw_bitmap(texture, 0, 0, 0);
-        
-        al_free(texture);
         
         ptr_array_add(obstacles, body);
     }

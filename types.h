@@ -1,3 +1,6 @@
+#ifndef DS_TYPES_H
+#define DS_TYPES_H
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -22,4 +25,6 @@ void ptr_array_free(ptr_array_t *pta, bool free_all);
 table_t* table_new();
 void table_insert(table_t *tbl, const char *key, void *val);
 void* table_lookup(table_t *tbl, const char *key);
-void table_clear(table_t *tbl);
+void table_clear(table_t *tbl, bool free_all);
+
+#endif

@@ -59,6 +59,7 @@ function drawBody(ctx, body) {
     ctx.save();
     ctx.translate(pos.x, pos.y);
     ctx.rotate(angle);
-    ctx.fillRect(-20, -5, 40, 10);
+    ctx.scale(0.4, 0.4);
+    ctx.drawImage(document.getElementById("block"), -50, -12.5);
     ctx.restore();
 }

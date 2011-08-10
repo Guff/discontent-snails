@@ -3,10 +3,47 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>discontent snails level editor</title>
+<link rel="stylesheet" type="text/css" href="leveleditor.css" />
 <script type="text/javascript" src="leveleditor.js"></script>
 </head>
 <body onload="initEditor();">
-<img src="data/wooden-block-40x10.png" style="display:none" id="block" />
+<div id="levelText">
+<form name="levelJSON">
+<textarea name="levelJSONtext" cols="40" rows="30">{
+    "obstacles":
+    [
+        {
+            "type": "block",
+            "x": 200,
+            "y": 235,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 105,
+            "y": 220,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 135,
+            "y": 220,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 120,
+            "y": 200,
+            "angle": 0
+        }
+    ]
+}</textarea>
+<br>
+<button type="button" name="dicks" onclick="drawLevel(ctx)">update</button>
+</form>
+</div>
+<div id="levelCanvas">
 <canvas id="leveleditor" width="640" height="480">your browser sucks</canvas>
+</div>
 </body>
 </html>

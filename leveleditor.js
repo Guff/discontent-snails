@@ -1,40 +1,15 @@
 var canvas;
 var ctx;
+var textures;
+var level;
 
 function initEditor() {
     canvas = document.getElementById("leveleditor");
     ctx = canvas.getContext("2d");
     
-    level = {
-        "obstacles":
-        [
-            {
-                "type": "block",
-                "x": 200,
-                "y": 235,
-                "angle": 0
-            },
-            {
-                "type": "block",
-                "x": 105,
-                "y": 220,
-                "angle": 90
-            },
-            {
-                "type": "block",
-                "x": 135,
-                "y": 220,
-                "angle": 90
-            },
-            {
-                "type": "block",
-                "x": 120,
-                "y": 200,
-                "angle": 0
-            }
-        ]
-    }
-    drawLevel(ctx, level);
+    textures = { block: new Image() };
+    textures.block.src = "data/wooden-block-40x10.png";
+    drawLevel(ctx);
 }
 
 function canvasToCp(pos) {
@@ -45,7 +20,8 @@ function cpToCanvas(pos) {
     return { x: pos.x + canvas.width / 2, y: pos.y + canvas.height / 2 };
 }
 
-function drawLevel(ctx, level) {
+function drawLevel(ctx) {
+    var level = JSON.parse(document.levelJSON.levelJSONtext.value);
     ctx.fillStyle = "#000000";
     ctx.rect(0, 0, canvas.width, canvas.height);
     ctx.fill();
@@ -60,6 +36,6 @@ function drawBody(ctx, body) {
     ctx.translate(pos.x, pos.y);
     ctx.rotate(angle);
     ctx.scale(0.4, 0.4);
-    ctx.drawImage(document.getElementById("block"), -50, -12.5);
+    ctx.drawImage(textures.block, -50, -12.5);
     ctx.restore();
 }

@@ -48,7 +48,8 @@ void init_world(void) {
     cpSpaceSetGravity(space, cpv(0, 100));
     cpShape *ground = cpSegmentShapeNew(space->staticBody, cpv(-400, 240),
                                         cpv(400, 240), 0);
-    cpShapeSetFriction(ground, 0.3);
+    cpShapeSetElasticity(ground, 0.3);
+    cpShapeSetFriction(ground, 0.8);
     
     cpSpaceAddShape(space, ground);
 
@@ -68,10 +69,12 @@ void init_bodies(void) {
     
     rect->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
     
-    cpBodySetPos(rect->body, al_to_cp(0, 0));
+    cpBodySetPos(rect->body, al_to_cp(50, 0));
     rect->shape = cpBoxShapeNew(rect->body, 50, 10);
     
-    cpShapeSetFriction(rect->shape, 0.3);
+    cpShapeSetElasticity(rect->shape, 0.65);
+    
+    cpShapeSetFriction(rect->shape, 0.8);
     cpSpaceAddShape(space, rect->shape);
     
     rect->bitmap = al_create_bitmap(50, 10);
@@ -91,7 +94,8 @@ void init_bodies(void) {
         cpBodySetAngle(body->body, obstacle->angle / 180 * M_PI);
         
         body->shape = cpBoxShapeNew(body->body, 40, 10);
-        cpShapeSetFriction(body->shape, 0.3);
+        cpShapeSetElasticity(body->shape, 0.65);
+        cpShapeSetFriction(body->shape, 0.8);
         cpSpaceAddShape(space, body->shape);
         
         body->bitmap = al_create_bitmap(40, 10);
@@ -173,16 +177,16 @@ int main(int argc, char **argv) {
                         running = false;
                         break;
                     case ALLEGRO_KEY_UP:
-                        cpBodySetForce(rect->body, cpv(0, -5));
+                        cpBodyApplyImpulse(rect->body, cpv(0, -75), cpv(0, 0));
                         break;
                     case ALLEGRO_KEY_DOWN:
-                        cpBodySetForce(rect->body, cpv(0, 5));
+                        cpBodyApplyImpulse(rect->body, cpv(0, 75), cpv(0, 0));
                         break;
                     case ALLEGRO_KEY_LEFT:
-                        cpBodySetForce(rect->body, cpv(-5, 0));
+                        cpBodyApplyImpulse(rect->body, cpv(-75, 0), cpv(0, 0));
                         break;
                     case ALLEGRO_KEY_RIGHT:
-                        cpBodySetForce(rect->body, cpv(5, 0));
+                        cpBodyApplyImpulse(rect->body, cpv(75, 0), cpv(0, 0));
                         break;
                     default:
                         break;

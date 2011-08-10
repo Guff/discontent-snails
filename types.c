@@ -44,4 +44,3 @@ void ptr_array_free(ptr_array_t *pta, bool free_all) {
     free(pta->data);
     free(pta);
 }
-

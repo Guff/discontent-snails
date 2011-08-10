@@ -115,7 +115,7 @@ void init_bodies(void) {
         }
         
         al_set_target_bitmap(body->bitmap);
-        al_draw_bitmap(texture, 0, 0, 0);
+        al_draw_scaled_bitmap(texture, 0, 0, 100, 25, 0, 0, 40, 10, 0);
         
         ptr_array_add(obstacles, body);
     }

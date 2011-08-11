@@ -5,3 +5,7 @@
 #levelCanvas{
     float: left;
 }
+
+#images{
+    display: none;
+}

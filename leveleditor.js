@@ -6,16 +6,15 @@ var level;
 function initEditor() {
     canvas = document.getElementById("leveleditor");
     ctx = canvas.getContext("2d");
-    
     level = JSON.parse(document.levelJSON.levelJSONtext.value);
     
     textures = { block: new Image(), slingshot: new Image(), bg: new Image(),
                  ground: new Image(), snail: new Image() };
-    textures.block.src = "data/wooden-block-40x10.png";
-    textures.slingshot.src = "data/slingshot.png";
-    textures.bg.src = "data/sky-bg.png";
-    textures.ground.src = "data/ground.png";
-    textures.snail.src = "data/snail-normal.png";
+    textures.block = document.getElementById("block");
+    textures.slingshot = document.getElementById("slingshot");
+    textures.bg = document.getElementById("bg");
+    textures.ground = document.getElementById("ground");
+    textures.snail = document.getElementById("snail");
     drawLevel(ctx, level);
 }
 
@@ -71,6 +70,7 @@ function onMouseUp(e) {
 }
 
 function drawLevel(ctx, level) {
+    //alert(ctx);
     ctx.drawImage(textures.bg, 0, 0);
     ctx.drawImage(textures.ground, 0, 430);
     drawSlingshot(ctx, level.slingshot);

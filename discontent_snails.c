@@ -10,7 +10,7 @@
 #include "textures.h"
 
 #define FPS             30.0
-#define PHYSICS_STEP    (1 / 100.0)
+#define PHYSICS_STEP    (1 / 250.0)
 #define RECT_MASS       1
 #define WIDTH           640
 #define HEIGHT          480
@@ -26,6 +26,7 @@ typedef struct {
     ALLEGRO_BITMAP *bitmap;
 } body_t;
 
+cpConstraint *spring;
 body_t *rect, *slingshot;
 ptr_array_t *obstacles;
 
@@ -42,12 +43,28 @@ void cp_to_al(cpVect vect, cpFloat *x, cpFloat *y) {
     *y = vect.y + HEIGHT / 2;
 }
 
+void slingshot_collision_post_step(cpSpace *space, void *obj, void *data) {
+    cpSpaceRemoveConstraint(space, spring);
+    cpConstraintDestroy(spring);
+    spring = NULL;
+}
+
+cpBool slingshot_collision_pre_solve(cpArbiter *arb, cpSpace *space, void *data) {
+    if (spring) {
+        cpArbiterIgnore(arb);
+        cpSpaceAddPostStepCallback(space, slingshot_collision_post_step, spring,
+                                   NULL);
+        return cpFalse;
+    }
+    return cpTrue;
+}
+
 void init_world(void) {
     space = cpSpaceNew();
     
     slingshot = body_new();
     
-    cpSpaceSetGravity(space, cpv(0, 100));
+    cpSpaceSetGravity(space, cpv(0, 200));
     cpShape *ground = cpSegmentShapeNew(space->staticBody, cpv(-400, 240),
                                         cpv(400, 240), 0);
     cpShapeSetElasticity(ground, 0.3);
@@ -55,10 +72,12 @@ void init_world(void) {
     
     cpSpaceAddShape(space, ground);
 
-    slingshot->shape = cpSegmentShapeNew(space->staticBody, cpv(-300, 240),
-                                        cpv(-300, 200), 0);
+    slingshot->body = cpBodyNewStatic();
+    slingshot->shape = cpSegmentShapeNew(slingshot->body, cpv(0, 0),
+                                         cpv(0, 40), 0);
     slingshot->bitmap = al_create_bitmap(2, 40);
     
+    cpBodySetPos(slingshot->body, cpv(-200, 200));
     cpSpaceAddShape(space, slingshot->shape);
     cpSpaceReindexStatic(space);
 }
@@ -73,7 +92,7 @@ void init_bodies(void) {
     
     rect->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
     
-    cpBodySetPos(rect->body, al_to_cp(50, 0));
+    cpBodySetPos(rect->body, al_to_cp(0, 475));
     rect->shape = cpBoxShapeNew(rect->body, 50, 10);
     
     cpShapeSetElasticity(rect->shape, 0.65);
@@ -82,6 +101,10 @@ void init_bodies(void) {
     cpSpaceAddShape(space, rect->shape);
     
     rect->bitmap = al_create_bitmap(50, 10);
+    
+    spring = cpDampedSpringNew(rect->body, slingshot->body, cpv(0, 0),
+                               cpv(0, 40), 50, 1, 0);
+    cpSpaceAddConstraint(space, spring);
 
     al_set_target_bitmap(rect->bitmap);
     al_clear_to_color(al_map_rgb(255, 255, 255));
@@ -89,8 +112,15 @@ void init_bodies(void) {
     al_set_target_bitmap(slingshot->bitmap);
     al_clear_to_color(al_map_rgb(255, 255, 255));
     
+    cpShapeSetCollisionType(rect->shape, 1);
+    cpShapeSetCollisionType(slingshot->shape, 2);
+    
+    cpSpaceAddCollisionHandler(space, 1, 2, NULL, slingshot_collision_pre_solve,
+                               NULL, NULL, NULL);
+    
     level_t *level = level_parse("level.json");
     for (uint32_t i = 0; i < level->obstacles->len; i++) {
+        moment = cpMomentForBox(RECT_MASS, 40, 10);
         obstacle_t *obstacle = ptr_array_index(level->obstacles, i);
         body_t *body = body_new();
         body->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
@@ -133,7 +163,9 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
 
     al_draw_rotated_bitmap(rect->bitmap, 25, 5, rect_x, rect_y, rect_ang, 0);
     
-    al_draw_bitmap(slingshot->bitmap, 20, 440, 0);
+    cpFloat sling_x, sling_y;
+    cp_to_al(cpBodyGetPos(slingshot->body), &sling_x, &sling_y);
+    al_draw_bitmap(slingshot->bitmap, sling_x, sling_y, 0);
     
     for (uint32_t i = 0; i < obstacles->len; i++) {
         body_t *body = ptr_array_index(obstacles, i);

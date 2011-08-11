@@ -26,8 +26,10 @@ typedef struct {
     ALLEGRO_BITMAP *bitmap;
 } body_t;
 
+ALLEGRO_BITMAP *snail_bitmap;
+
 cpConstraint *spring;
-body_t *rect, *slingshot;
+body_t *snail, *slingshot;
 ptr_array_t *obstacles;
 
 body_t* body_new(void) {
@@ -85,34 +87,34 @@ void init_world(void) {
 void init_bodies(void) {
     table_t *textures = textures_load();
     
-    rect = body_new();
+    snail = body_new();
     obstacles = ptr_array_new();
     
-    cpFloat moment = cpMomentForBox(RECT_MASS, 50, 10);
+    cpFloat moment = cpMomentForCircle(RECT_MASS, 0, 15, cpv(0, 0));
     
-    rect->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
+    snail->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
     
-    cpBodySetPos(rect->body, al_to_cp(0, 475));
-    rect->shape = cpBoxShapeNew(rect->body, 50, 10);
+    cpBodySetPos(snail->body, al_to_cp(0, 475));
+    snail->shape = cpCircleShapeNew(snail->body, 15, cpv(0, 0));
     
-    cpShapeSetElasticity(rect->shape, 0.65);
+    cpShapeSetElasticity(snail->shape, 0.65);
     
-    cpShapeSetFriction(rect->shape, 0.8);
-    cpSpaceAddShape(space, rect->shape);
+    cpShapeSetFriction(snail->shape, 0.8);
+    cpSpaceAddShape(space, snail->shape);
     
-    rect->bitmap = al_create_bitmap(50, 10);
+    snail->bitmap = al_create_bitmap(30, 30);
     
-    spring = cpDampedSpringNew(rect->body, slingshot->body, cpv(0, 0),
+    spring = cpDampedSpringNew(snail->body, slingshot->body, cpv(0, 0),
                                cpv(0, 40), 50, 1, 0);
     cpSpaceAddConstraint(space, spring);
 
-    al_set_target_bitmap(rect->bitmap);
-    al_clear_to_color(al_map_rgb(255, 255, 255));
+    al_set_target_bitmap(snail->bitmap);
+    al_draw_scaled_bitmap(snail_bitmap, 0, 0, 120, 120, 0, 0, 30, 30, 0);
     
     al_set_target_bitmap(slingshot->bitmap);
     al_clear_to_color(al_map_rgb(255, 255, 255));
     
-    cpShapeSetCollisionType(rect->shape, 1);
+    cpShapeSetCollisionType(snail->shape, 1);
     cpShapeSetCollisionType(slingshot->shape, 2);
     
     cpSpaceAddCollisionHandler(space, 1, 2, NULL, slingshot_collision_pre_solve,
@@ -155,13 +157,13 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
     al_set_target_backbuffer(display);
     al_clear_to_color(al_map_rgb(0, 0, 0));
     
-    cpVect rect_pos = cpBodyGetPos(rect->body);
-    cpFloat rect_ang = cpBodyGetAngle(rect->body);
+    cpVect snail_pos = cpBodyGetPos(snail->body);
+    cpFloat snail_ang = cpBodyGetAngle(snail->body);
     
-    cpFloat rect_x, rect_y;
-    cp_to_al(rect_pos, &rect_x, &rect_y);
+    cpFloat snail_x, snail_y;
+    cp_to_al(snail_pos, &snail_x, &snail_y);
 
-    al_draw_rotated_bitmap(rect->bitmap, 25, 5, rect_x, rect_y, rect_ang, 0);
+    al_draw_rotated_bitmap(snail->bitmap, 15, 15, snail_x, snail_y, snail_ang, 0);
     
     cpFloat sling_x, sling_y;
     cp_to_al(cpBodyGetPos(slingshot->body), &sling_x, &sling_y);
@@ -206,6 +208,8 @@ int main(int argc, char **argv) {
     al_start_timer(frames_timer);
     al_start_timer(phys_timer);
     
+    snail_bitmap = al_load_bitmap("data/snail-normal.png");
+    
     init_world();
     init_bodies();
     
@@ -227,16 +231,16 @@ int main(int argc, char **argv) {
                         running = false;
                         break;
                     case ALLEGRO_KEY_UP:
-                        cpBodyApplyImpulse(rect->body, cpv(0, -75), cpv(0, 0));
+                        cpBodyApplyImpulse(snail->body, cpv(0, -75), cpv(0, 0));
                         break;
                     case ALLEGRO_KEY_DOWN:
-                        cpBodyApplyImpulse(rect->body, cpv(0, 75), cpv(0, 0));
+                        cpBodyApplyImpulse(snail->body, cpv(0, 75), cpv(0, 0));
                         break;
                     case ALLEGRO_KEY_LEFT:
-                        cpBodyApplyImpulse(rect->body, cpv(-75, 0), cpv(0, 0));
+                        cpBodyApplyImpulse(snail->body, cpv(-75, 0), cpv(0, 0));
                         break;
                     case ALLEGRO_KEY_RIGHT:
-                        cpBodyApplyImpulse(rect->body, cpv(75, 0), cpv(0, 0));
+                        cpBodyApplyImpulse(snail->body, cpv(75, 0), cpv(0, 0));
                         break;
                     default:
                         break;
@@ -246,7 +250,7 @@ int main(int argc, char **argv) {
                 {
                 cpVect pos = al_to_cp(ev.mouse.x, ev.mouse.y);
                 
-                if (cpShapePointQuery(rect->shape, pos))
+                if (cpShapePointQuery(snail->shape, pos))
                     pressed = true;
                 }
                 break;
@@ -255,7 +259,7 @@ int main(int argc, char **argv) {
                 break;
             case ALLEGRO_EVENT_MOUSE_AXES:
                 if (pressed)
-                    cpBodySetPos(rect->body, cpv(ev.mouse.x - WIDTH / 2, 
+                    cpBodySetPos(snail->body, cpv(ev.mouse.x - WIDTH / 2, 
                                                  ev.mouse.y - HEIGHT / 2));
                 break;
             default:

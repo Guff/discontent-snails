@@ -4,7 +4,12 @@
 #include "types.h"
 
 typedef struct {
+    double x, y;
+} slingshot_t;
+
+typedef struct {
     ptr_array_t *obstacles;
+    slingshot_t slingshot;
 } level_t;
 
 typedef enum {

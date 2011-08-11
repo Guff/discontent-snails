@@ -112,6 +112,37 @@ obstacle_lbl:
         json_decref(obstacle_obj);
     }
     
+    json_t *slingshot = json_object_get(root, "slingshot");
+    if (!json_is_object(slingshot)) {
+        fprintf(stderr, "\"slingshot\" is not an object\n");
+        parse_error = true;
+        goto slingshot_lbl;
+    }
+    
+    json_t *slingshot_x = json_object_get(slingshot, "x");
+    if (!json_is_number(slingshot_x)) {
+        fprintf(stderr, "\"x\" is not a number\n");
+        parse_error = true;
+        goto slingshot_x_lbl;
+    }
+    
+    level->slingshot.x = json_number_value(slingshot_x);
+    
+    json_t *slingshot_y = json_object_get(slingshot, "y");
+    if (!json_is_number(slingshot_y)) {
+        fprintf(stderr, "\"y\" is not a number\n");
+        parse_error = true;
+        goto slingshot_y_lbl;
+    }
+    
+    level->slingshot.y = json_number_value(slingshot_y);
+    
+slingshot_y_lbl:
+    json_decref(slingshot_y);
+slingshot_x_lbl:
+    json_decref(slingshot_x);
+slingshot_lbl:
+    json_decref(slingshot);
 obstacles_lbl:
     json_decref(obstacles);
 root_lbl:

@@ -1,6 +1,5 @@
 {
-    "obstacles":
-    [
+    "obstacles": [
         {
             "type": "block",
             "x": 520,

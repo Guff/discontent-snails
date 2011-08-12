@@ -61,7 +61,7 @@ function onMouseMove(body, pos, e) {
             break;
     }
     drawLevel(ctx, level);
-    document.levelJSON.levelJSONtext.value = JSON.stringify(level);
+    document.levelJSON.levelJSONtext.value = JSON.stringify(level, null, 4);
 }
 
 function onMouseDown(level, e) {

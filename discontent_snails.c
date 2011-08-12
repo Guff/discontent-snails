@@ -9,6 +9,9 @@
 #include "level.h"
 #include "textures.h"
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
 #define FPS             30.0
 #define PHYSICS_STEP    (1 / 250.0)
 #define RECT_MASS       1
@@ -24,11 +27,13 @@ typedef enum {
     BODY_TYPE_SNAIL,
     BODY_TYPE_SLINGSHOT,
     BODY_TYPE_OBSTACLE,
-    BODY_TYPE_ENEMY
+    BODY_TYPE_ENEMY,
+    BODY_TYPE_GROUND
 } body_type_t;
 
 typedef struct {
     body_type_t type;
+    bool removed;
     cpBody *body;
     cpShape *shape;
     ALLEGRO_BITMAP *bitmap;
@@ -49,7 +54,7 @@ ALLEGRO_BITMAP *ground_bitmap;
 ALLEGRO_BITMAP *slingshot_bitmap;
 
 cpConstraint *spring;
-body_t *snail, *slingshot;
+body_t *snail, *slingshot, *ground_body;
 ptr_array_t *obstacles;
 ptr_array_t *enemies;
 
@@ -57,20 +62,33 @@ body_t* body_new(void) {
     return calloc(1, sizeof(body_t));
 }
 
-void obstacle_collision_post_step(cpSpace *space, void *obj, void *data) {
-    body_t *body = data;
+void body_remove(body_t *body) {
+    if (!body || body->removed)
+        return;
+    
     cpSpaceRemoveShape(space, body->shape);
     cpSpaceRemoveBody(space, body->body);
+    body->removed = true;
+}
+
+void obstacle_collision_post_step(cpSpace *space, void *obj, void *data) {
+    body_t *body = data;
+    if (!body || !body->shape || !body->body)
+        return;
+    body_remove(body);
     ptr_array_remove(obstacles, body);
 }
 
 void obstacle_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data) {
     CP_ARBITER_GET_SHAPES(arb, a, b);
-    body_t *body = cpShapeGetUserData(a);
-    if (body->type != BODY_TYPE_OBSTACLE)
-        body = cpShapeGetUserData(b);
+    CP_ARBITER_GET_BODIES(arb, b0, b1);
     
-    body->damage += 0.25;
+    body_t *body = cpShapeGetUserData(a);
+    if (!body || body->type != BODY_TYPE_OBSTACLE)
+        body = cpShapeGetUserData(b);
+    cpVect impulse = cpArbiterTotalImpulseWithFriction(arb);
+    body->damage += MAX(cpvlength(impulse) - 150, 0) / 200;
+    
     if (body->damage >= 1) {
         cpSpaceAddPostStepCallback(space, obstacle_collision_post_step, arb,
                                    body);
@@ -97,10 +115,14 @@ void init_world(level_t *level) {
     space = cpSpaceNew();
     
     slingshot = body_new();
+    ground_body = body_new();
     
     cpSpaceSetGravity(space, cpv(0, 200));
     cpShape *ground = cpSegmentShapeNew(space->staticBody, cpv(-100, HEIGHT - 40),
                                         cpv(WIDTH + 100, HEIGHT - 40), 0);
+    ground_body->type = BODY_TYPE_GROUND;
+    ground_body->shape = ground;
+    cpShapeSetUserData(ground, ground_body);
     cpShapeSetElasticity(ground, 0.3);
     cpShapeSetFriction(ground, 0.8);
     
@@ -175,15 +197,19 @@ void init_bodies(level_t *level) {
     cpSpaceAddCollisionHandler(space, COLLISION_TYPE_ENEMY,
                                COLLISION_TYPE_OBSTACLE, NULL, NULL,
                                obstacle_collision_post_solve, NULL, NULL);
-    //cpSpaceAddCollisionHandler(space, COLLISION_TYPE_OBSTACLE,
-                               //COLLISION_TYPE_OBSTACLE, NULL, NULL,
-                               //obstacle_collision_post_solve, NULL, NULL);
+    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_GROUND,
+                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
+                               obstacle_collision_post_solve, NULL, NULL);
+    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_OBSTACLE,
+                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
+                               obstacle_collision_post_solve, NULL, NULL);
     
     
     for (uint32_t i = 0; i < level->obstacles->len; i++) {
         moment = cpMomentForBox(RECT_MASS, 40, 10);
         obstacle_t *obstacle = ptr_array_index(level->obstacles, i);
         body_t *body = body_new();
+        body->type = BODY_TYPE_OBSTACLE;
         body->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
         cpBodySetPos(body->body, cpv(obstacle->x, obstacle->y));
         cpBodySetAngle(body->body, obstacle->angle / 180 * M_PI);
@@ -191,7 +217,7 @@ void init_bodies(level_t *level) {
         body->shape = cpBoxShapeNew(body->body, 40, 10);
         cpShapeSetUserData(body->shape, body);
         cpShapeSetCollisionType(body->shape, COLLISION_TYPE_OBSTACLE);
-        cpShapeSetElasticity(body->shape, 0.65);
+        cpShapeSetElasticity(body->shape, 0.15);
         cpShapeSetFriction(body->shape, 0.8);
         cpSpaceAddShape(space, body->shape);
         
@@ -217,13 +243,14 @@ void init_bodies(level_t *level) {
         moment = cpMomentForBox(RECT_MASS, 50, 50);
         enemy_t *enemy = ptr_array_index(level->enemies, i);
         body_t *body = body_new();
+        body->type = BODY_TYPE_ENEMY;
         body->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
         cpBodySetPos(body->body, cpv(enemy->x, enemy->y));
         
         body->shape = cpBoxShapeNew(body->body, 50, 50);
         cpShapeSetUserData(body->shape, body);
         cpShapeSetCollisionType(body->shape, COLLISION_TYPE_ENEMY);
-        cpShapeSetElasticity(body->shape, 0.65);
+        cpShapeSetElasticity(body->shape, 0.45);
         cpShapeSetFriction(body->shape, 0.8);
         cpSpaceAddShape(space, body->shape);
         
@@ -256,12 +283,14 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
         cpVect pos = cpBodyGetPos(body->body);
         cpFloat angle = cpBodyGetAngle(body->body);
         al_draw_rotated_bitmap(body->bitmap, 20, 5, pos.x, pos.y, angle, 0);
+        //printf("%f\n", body->damage);
     }
     
     for (uint32_t i = 0; i < enemies->len; i++) {
         body_t *body = ptr_array_index(enemies, i);
         cpVect pos = cpBodyGetPos(body->body);
-        al_draw_bitmap(body->bitmap, pos.x - 25, pos.y - 25, 0);
+        cpFloat angle = cpBodyGetAngle(body->body);
+        al_draw_rotated_bitmap(body->bitmap, 25, 25, pos.x, pos.y, angle, 0);
     }
     
     al_flip_display();

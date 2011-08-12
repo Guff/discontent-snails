@@ -20,16 +20,74 @@
         },
         {
             "type": "block",
+            "x": 590,
+            "y": 207,
+            "angle": 0
+        },
+        {
+            "type": "block",
             "x": 440,
-            "y": 400,
+            "y": 395,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 414,
+            "y": 276,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 317,
+            "y": 125,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 194,
+            "y": 100,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 457,
+            "y": 107,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 506,
+            "y": 237,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 253,
+            "y": 188,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 375,
+            "y": 204,
             "angle": 0
         }
     ],
     "enemies": [
         {
             "type": "normal",
-            "x": 350,
-            "y": 300
+            "x": 342,
+            "y": 332
+        },
+        {
+            "type": "normal",
+            "x": 303,
+            "y": 251
+        },
+        {
+            "type": "normal",
+            "x": 303,
+            "y": 251
         }
     ],
     "slingshot": {

@@ -28,7 +28,7 @@ void ptr_array_clear(ptr_array_t *pta) {
 void ptr_array_remove(ptr_array_t *pta, void *ptr) {
     for (uint i = 0; i < pta->len; i++) {
         if (ptr_array_index(pta, i) == ptr) {
-            for (uint j = i; j < pta->len; j++)
+            for (uint j = i; j < pta->len - 1; j++)
                 pta->data[j] = pta->data[j + 1];
             pta->len--;
             break;

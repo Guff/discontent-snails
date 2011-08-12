@@ -20,15 +20,27 @@ cpSpace *space;
 static bool running = true;
 static bool pressed = false;
 
+typedef enum {
+    BODY_TYPE_SNAIL,
+    BODY_TYPE_SLINGSHOT,
+    BODY_TYPE_OBSTACLE,
+    BODY_TYPE_ENEMY
+} body_type_t;
+
 typedef struct {
+    body_type_t type;
     cpBody *body;
     cpShape *shape;
     ALLEGRO_BITMAP *bitmap;
+    cpFloat damage;
 } body_t;
 
 enum {
     COLLISION_TYPE_SNAIL = 1,
-    COLLISION_TYPE_SLINGSHOT
+    COLLISION_TYPE_SLINGSHOT,
+    COLLISION_TYPE_OBSTACLE,
+    COLLISION_TYPE_ENEMY,
+    COLLISION_TYPE_GROUND
 };
 
 ALLEGRO_BITMAP *snail_bitmap;
@@ -43,6 +55,26 @@ ptr_array_t *enemies;
 
 body_t* body_new(void) {
     return calloc(1, sizeof(body_t));
+}
+
+void obstacle_collision_post_step(cpSpace *space, void *obj, void *data) {
+    body_t *body = data;
+    cpSpaceRemoveShape(space, body->shape);
+    cpSpaceRemoveBody(space, body->body);
+    ptr_array_remove(obstacles, body);
+}
+
+void obstacle_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data) {
+    CP_ARBITER_GET_SHAPES(arb, a, b);
+    body_t *body = cpShapeGetUserData(a);
+    if (body->type != BODY_TYPE_OBSTACLE)
+        body = cpShapeGetUserData(b);
+    
+    body->damage += 0.25;
+    if (body->damage >= 1) {
+        cpSpaceAddPostStepCallback(space, obstacle_collision_post_step, arb,
+                                   body);
+    }
 }
 
 void slingshot_collision_post_step(cpSpace *space, void *obj, void *data) {
@@ -113,7 +145,7 @@ void init_bodies(level_t *level) {
                                   sizeof(snail_verts) / sizeof(cpVect),
                                   snail_verts,
                                   cpv(0, 0));
-    
+    cpShapeSetUserData(snail->shape, snail);
     cpShapeSetElasticity(snail->shape, 0.65);
     
     cpShapeSetFriction(snail->shape, 0.6);
@@ -134,6 +166,19 @@ void init_bodies(level_t *level) {
     cpSpaceAddCollisionHandler(space, COLLISION_TYPE_SNAIL,
                                COLLISION_TYPE_SLINGSHOT, NULL,
                                slingshot_collision_pre_solve, NULL, NULL, NULL);
+    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_SNAIL,
+                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
+                               obstacle_collision_post_solve, NULL, NULL);
+    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_SLINGSHOT,
+                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
+                               obstacle_collision_post_solve, NULL, NULL);
+    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_ENEMY,
+                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
+                               obstacle_collision_post_solve, NULL, NULL);
+    //cpSpaceAddCollisionHandler(space, COLLISION_TYPE_OBSTACLE,
+                               //COLLISION_TYPE_OBSTACLE, NULL, NULL,
+                               //obstacle_collision_post_solve, NULL, NULL);
+    
     
     for (uint32_t i = 0; i < level->obstacles->len; i++) {
         moment = cpMomentForBox(RECT_MASS, 40, 10);
@@ -144,6 +189,8 @@ void init_bodies(level_t *level) {
         cpBodySetAngle(body->body, obstacle->angle / 180 * M_PI);
         
         body->shape = cpBoxShapeNew(body->body, 40, 10);
+        cpShapeSetUserData(body->shape, body);
+        cpShapeSetCollisionType(body->shape, COLLISION_TYPE_OBSTACLE);
         cpShapeSetElasticity(body->shape, 0.65);
         cpShapeSetFriction(body->shape, 0.8);
         cpSpaceAddShape(space, body->shape);
@@ -174,6 +221,8 @@ void init_bodies(level_t *level) {
         cpBodySetPos(body->body, cpv(enemy->x, enemy->y));
         
         body->shape = cpBoxShapeNew(body->body, 50, 50);
+        cpShapeSetUserData(body->shape, body);
+        cpShapeSetCollisionType(body->shape, COLLISION_TYPE_ENEMY);
         cpShapeSetElasticity(body->shape, 0.65);
         cpShapeSetFriction(body->shape, 0.8);
         cpSpaceAddShape(space, body->shape);

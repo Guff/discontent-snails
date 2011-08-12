@@ -26,6 +26,11 @@ typedef struct {
     ALLEGRO_BITMAP *bitmap;
 } body_t;
 
+enum {
+    COLLISION_TYPE_SNAIL = 1,
+    COLLISION_TYPE_SLINGSHOT
+};
+
 ALLEGRO_BITMAP *snail_bitmap;
 ALLEGRO_BITMAP *bg_bitmap;
 ALLEGRO_BITMAP *ground_bitmap;
@@ -34,6 +39,7 @@ ALLEGRO_BITMAP *slingshot_bitmap;
 cpConstraint *spring;
 body_t *snail, *slingshot;
 ptr_array_t *obstacles;
+ptr_array_t *enemies;
 
 body_t* body_new(void) {
     return calloc(1, sizeof(body_t));
@@ -90,6 +96,7 @@ void init_bodies(level_t *level) {
     
     snail = body_new();
     obstacles = ptr_array_new();
+    enemies = ptr_array_new();
     
     cpVect snail_verts[] = { cpv(-3, 14), cpv(13, 6), cpv(14, 0), cpv(12, -8),
                              cpv(6, -13), cpv(0, -14), cpv(-9, -11), cpv(-12, -4),
@@ -101,7 +108,7 @@ void init_bodies(level_t *level) {
     
     snail->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
     
-    cpBodySetPos(snail->body, cpv(0, 435));
+    cpBodySetPos(snail->body, cpv(70, 435));
     snail->shape = cpPolyShapeNew(snail->body, 
                                   sizeof(snail_verts) / sizeof(cpVect),
                                   snail_verts,
@@ -121,11 +128,12 @@ void init_bodies(level_t *level) {
     al_set_target_bitmap(snail->bitmap);
     al_draw_scaled_bitmap(snail_bitmap, 0, 0, 120, 120, 0, 0, 30, 30, 0);
     
-    cpShapeSetCollisionType(snail->shape, 1);
-    cpShapeSetCollisionType(slingshot->shape, 2);
+    cpShapeSetCollisionType(snail->shape, COLLISION_TYPE_SNAIL);
+    cpShapeSetCollisionType(slingshot->shape, COLLISION_TYPE_SLINGSHOT);
     
-    cpSpaceAddCollisionHandler(space, 1, 2, NULL, slingshot_collision_pre_solve,
-                               NULL, NULL, NULL);
+    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_SNAIL,
+                               COLLISION_TYPE_SLINGSHOT, NULL,
+                               slingshot_collision_pre_solve, NULL, NULL, NULL);
     
     for (uint32_t i = 0; i < level->obstacles->len; i++) {
         moment = cpMomentForBox(RECT_MASS, 40, 10);
@@ -157,6 +165,26 @@ void init_bodies(level_t *level) {
         
         ptr_array_add(obstacles, body);
     }
+    
+    for (uint32_t i = 0; i < level->enemies->len; i++) {
+        moment = cpMomentForBox(RECT_MASS, 50, 50);
+        enemy_t *enemy = ptr_array_index(level->enemies, i);
+        body_t *body = body_new();
+        body->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
+        cpBodySetPos(body->body, cpv(enemy->x, enemy->y));
+        
+        body->shape = cpBoxShapeNew(body->body, 50, 50);
+        cpShapeSetElasticity(body->shape, 0.65);
+        cpShapeSetFriction(body->shape, 0.8);
+        cpSpaceAddShape(space, body->shape);
+        
+        body->bitmap = al_create_bitmap(50, 50);
+        
+        al_set_target_bitmap(body->bitmap);
+        al_clear_to_color(al_map_rgb(255, 255, 255));
+        
+        ptr_array_add(enemies, body);
+    }
 }
 
 void draw_frame(ALLEGRO_DISPLAY *display) {
@@ -179,6 +207,12 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
         cpVect pos = cpBodyGetPos(body->body);
         cpFloat angle = cpBodyGetAngle(body->body);
         al_draw_rotated_bitmap(body->bitmap, 20, 5, pos.x, pos.y, angle, 0);
+    }
+    
+    for (uint32_t i = 0; i < enemies->len; i++) {
+        body_t *body = ptr_array_index(enemies, i);
+        cpVect pos = cpBodyGetPos(body->body);
+        al_draw_bitmap(body->bitmap, pos.x - 25, pos.y - 25, 0);
     }
     
     al_flip_display();

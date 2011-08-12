@@ -9,6 +9,7 @@ typedef struct {
 
 typedef struct {
     ptr_array_t *obstacles;
+    ptr_array_t *enemies;
     slingshot_t slingshot;
 } level_t;
 
@@ -19,11 +20,19 @@ typedef enum {
 typedef struct {
     obstacle_type_t type;
     
-    double x;
-    double y;
+    double x, y;
     
     double angle;
 } obstacle_t;
+
+typedef enum {
+    ENEMY_TYPE_NORMAL
+} enemy_type_t;
+
+typedef struct {
+    enemy_type_t type;
+    double x, y;
+} enemy_t;
 
 void level_free(level_t *level);
 level_t* level_parse(const char *filename);

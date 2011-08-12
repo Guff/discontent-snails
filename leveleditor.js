@@ -21,12 +21,14 @@ function initEditor() {
 function getBoundingBoxes(level) {
     boundingBoxes = new Array();
     
-    boundingBoxes[0] = { body: level.slingshot, x: level.slingshot.x - 7,
-                         y: level.slingshot.y - 40, w: 13, h: 40 };
+    boundingBoxes[0] = { type: "slingshot", body: level.slingshot,
+                         x: level.slingshot.x - 7, y: level.slingshot.y - 40,
+                         w: 13, h: 40 };
     for (i = 0; i < level.obstacles.length; i++) {
         obstacle = level.obstacles[i];
-        boundingBoxes.push({ body: obstacle, x: obstacle.x - 20,
-                             y: obstacle.y - 5, w: 40, h: 10 });
+        boundingBoxes.push({ type: "obstacle", body: obstacle,
+                             x: obstacle.x - 20, y: obstacle.y - 5,
+                             w: 40, h: 10 });
     }
     return boundingBoxes;
 }
@@ -37,23 +39,38 @@ function mouseOverBody(body, e) {
     var bx0 = body.x, bx1 = body.x + body.w;
     var by0 = body.y, by1 = body.y + body.h;
     if (x >= bx0 && x <= bx1 && y >= by0 && y <= by1) {
-        return body;
+        return [body, { x: bx1 - x, y: by1 - y }];
     } else {
-        return null;
+        return [null, null];
     }
 }
 
-function onMouseMove(body, e) {
+function onMouseMove(body, pos, e) {
     body.body.x = e.pageX - canvas.offsetLeft;
     body.body.y = e.pageY - canvas.offsetTop;
+    switch (body.type) {
+        case "slingshot":
+            body.body.x += pos.x;
+            body.body.y += pos.y;
+            break;
+        case "obstacle":    
+            body.body.x += pos.x - body.w + 20;
+            body.body.y += pos.y - body.h + 5;
+            break;
+        default:
+            break;
+    }
     drawLevel(ctx, level);
-    document.levelJSON.levelJSONtext.value = JSON.stringify(level);
+    document.levelJSON.levelJSONtext.value = JSON.stringify(level, null, 4);
 }
 
 function onMouseDown(level, e) {
+    var body, pos;
     var boundingBoxes = getBoundingBoxes(level);
     for (i = 0; i < boundingBoxes.length; i++) {
-        var body = mouseOverBody(boundingBoxes[i], e);
+        var ret = mouseOverBody(boundingBoxes[i], e);
+        body = ret[0];
+        pos = ret[1];
         if (body) {
             break;
         }
@@ -62,7 +79,7 @@ function onMouseDown(level, e) {
         return;
     }
     
-    canvas.onmousemove = function (e) { onMouseMove(body, e); };
+    canvas.onmousemove = function (e) { onMouseMove(body, pos, e); };
 }
 
 function onMouseUp(e) {

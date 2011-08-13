@@ -33,9 +33,13 @@ function getBoundingBoxes(level) {
                          w: 14, h: 40 };
     for (var i = 0; i < level.obstacles.length; i++) {
         obstacle = level.obstacles[i];
+        var cos =  Math.cos(obstacle.angle / 180 * Math.PI);
+        var sin = Math.sin(obstacle.angle / 180 * Math.PI);
+        var w = cos * 40 + sin * 10;
+        var h = sin * 40 + cos * 10;
         boundingBoxes.push({ type: "obstacle", body: obstacle,
-                             x: obstacle.x - 20, y: obstacle.y - 5,
-                             w: 40, h: 10 });
+                             x: obstacle.x - w / 2, y: obstacle.y - h / 2,
+                             w: w, h: h });
     }
     for (var i = 0; i < level.enemies.length; i++) {
         enemy = level.enemies[i];
@@ -65,9 +69,13 @@ function onMouseMove(body, pos, e) {
             body.body.x += pos.x - 7;
             body.body.y += pos.y;
             break;
-        case "obstacle":    
-            body.body.x += pos.x - body.w + 20;
-            body.body.y += pos.y - body.h + 5;
+        case "obstacle":
+            //var cos = Math.cos(body.body.angle / 180 * Math.PI);
+            //var sin = Math.sin(body.body.angle / 180 * Math.PI);
+            //var w = cos * body.w + sin * body.h;
+            //var h = sin * body.w + cos * body.w;
+            //body.body.x += pos.x - w / 2;
+            //body.body.y += pos.y - h / 2;
             break;
         case "enemy":
             body.body.x += pos.x - body.w + 25;

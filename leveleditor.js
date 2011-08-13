@@ -153,10 +153,9 @@ function endSelection(pos, e) {
 function deleteSelected(body) {
     if (body) {
         if (body.type == "obstacle")
-            level.obstacles.pop(level.obstacles.indexOf(body.body));
+            level.obstacles.splice(level.obstacles.indexOf(body.body), 1);
         if (body.type == "enemy")
-            level.enemies.pop(level.enemies.indexOf(body.body));
-        
+            level.enemies.splice(level.enemies.indexOf(body.body), 1);
         selection = [];
         drawLevel(ctx, level);
     }

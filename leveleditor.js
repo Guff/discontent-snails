@@ -5,6 +5,7 @@ var level;
 var selection = [];
 var imageRect = null;
 var selectionColor = "rgba(180, 40, 40, 0.5)";
+var borderColor = "rgba(160, 20, 20, 0.65)";
 
 function initEditor() {
     canvas = document.getElementById("leveleditor");
@@ -20,7 +21,7 @@ function initEditor() {
     textures.snail = document.getElementById("snail");
     drawLevel(ctx, level);
     window.onkeypress = onKeyDown;
-    canvas.onmousedown = function (e) {onMouseDown(level, e)};
+    canvas.onmousedown = function (e) { onMouseDown(level, e); };
     canvas.onmouseup = onMouseUp;
 }
 
@@ -76,7 +77,6 @@ function onMouseMove(body, pos, e) {
             break;
     }
     drawLevel(ctx, level);
-    document.levelJSON.levelJSONtext.value = JSON.stringify(level, null, 4);
 }
 
 function onMouseDown(level, e) {
@@ -92,9 +92,9 @@ function onMouseDown(level, e) {
         if (!e.ctrlKey)
             selection = [];
         drawLevel(ctx, level);
-        var pos = { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop };
-        canvas.onmousemove = function (e) { beginSelection(pos, e) };
-        canvas.onmouseup = function (e) { endSelection(pos, e) };
+        pos = { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop };
+        canvas.onmousemove = function (e) { beginSelection(pos, e); };
+        canvas.onmouseup = function (e) { endSelection(pos, e); };
         return;
     }
     if (e.ctrlKey)
@@ -128,6 +128,15 @@ function onKeyDown(e) {
         default:
             break;
     }
+    
+    switch (e.keyCode) {
+        case 46:
+            selection.forEach(deleteSelected);
+            break;
+        default:
+            break;
+        break;
+    }
 }
 
 function beginSelection(pos, e) {
@@ -145,11 +154,27 @@ function endSelection(pos, e) {
     selection = [];
 }
 
+function deleteSelected(body) {
+    if (body) {
+        if (body.type == "obstacle")
+            level.obstacles.pop(level.obstacles.indexOf(body.body));
+        if (body.type == "enemy")
+            level.enemies.pop(level.enemies.indexOf(body.body));
+        
+        selection = [];
+        drawLevel(ctx, level);
+    }
+}
+
 function duplicateSelected(body) {
-    if (body && body.type == "obstacle")
-        level.obstacles.push(clone(body.body));
-    else if (body.type == "enemy")
-        level.enemies.push(clone(body.body));
+    if (body) {
+        if (body.type == "obstacle")
+            level.obstacles.push(clone(body.body));
+        else if (body.type == "enemy")
+            level.enemies.push(clone(body.body));
+    }
+    selection = [];
+    drawLevel(ctx, level);
 }
 
 function bodyInSelection(body) {
@@ -161,12 +186,12 @@ function bodyInSelection(body) {
 }
 
 function drawLevel(ctx, level) {
-    //alert(ctx);
+    document.levelJSON.levelJSONtext.value = JSON.stringify(level, null, 4);
     ctx.drawImage(textures.bg, 0, 0);
     ctx.drawImage(textures.ground, 0, 430);
     drawSlingshot(ctx, level.slingshot);
-    level.obstacles.forEach(function (body) { drawBody(ctx, body) });
-    level.enemies.forEach(function (enemy) { drawEnemy(ctx, enemy) });
+    level.obstacles.forEach(function (body) { drawBody(ctx, body); });
+    level.enemies.forEach(function (enemy) { drawEnemy(ctx, enemy); });
 }
 
 function drawSlingshot(ctx, slingshot) {

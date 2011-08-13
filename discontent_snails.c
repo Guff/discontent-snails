@@ -43,9 +43,8 @@ typedef struct {
 enum {
     COLLISION_TYPE_SNAIL = 1,
     COLLISION_TYPE_SLINGSHOT,
-    COLLISION_TYPE_OBSTACLE,
-    COLLISION_TYPE_ENEMY,
-    COLLISION_TYPE_GROUND
+    COLLISION_TYPE_DESTROYABLE,
+    COLLISION_TYPE_STATIC
 };
 
 ALLEGRO_BITMAP *snail_bitmap;
@@ -76,7 +75,10 @@ void obstacle_collision_post_step(cpSpace *space, void *obj, void *data) {
     if (!body || !body->shape || !body->body)
         return;
     body_remove(body);
-    ptr_array_remove(obstacles, body);
+    if (body->type == BODY_TYPE_ENEMY)
+        ptr_array_remove(enemies, body);
+    else
+        ptr_array_remove(obstacles, body);
 }
 
 void obstacle_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data) {
@@ -84,7 +86,7 @@ void obstacle_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data) {
     CP_ARBITER_GET_BODIES(arb, b0, b1);
     
     body_t *body = cpShapeGetUserData(a);
-    if (!body || body->type != BODY_TYPE_OBSTACLE)
+    if (!body || body->type != BODY_TYPE_OBSTACLE || body->type != BODY_TYPE_ENEMY)
         body = cpShapeGetUserData(b);
     cpVect impulse = cpArbiterTotalImpulseWithFriction(arb);
     body->damage += MAX(cpvlength(impulse) - 150, 0) / 200;
@@ -122,6 +124,7 @@ void init_world(level_t *level) {
                                         cpv(WIDTH + 100, HEIGHT - 40), 0);
     ground_body->type = BODY_TYPE_GROUND;
     ground_body->shape = ground;
+    cpShapeSetCollisionType(ground, COLLISION_TYPE_STATIC);
     cpShapeSetUserData(ground, ground_body);
     cpShapeSetElasticity(ground, 0.3);
     cpShapeSetFriction(ground, 0.8);
@@ -189,21 +192,17 @@ void init_bodies(level_t *level) {
                                COLLISION_TYPE_SLINGSHOT, NULL,
                                slingshot_collision_pre_solve, NULL, NULL, NULL);
     cpSpaceAddCollisionHandler(space, COLLISION_TYPE_SNAIL,
-                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
+                               COLLISION_TYPE_DESTROYABLE, NULL, NULL,
                                obstacle_collision_post_solve, NULL, NULL);
     cpSpaceAddCollisionHandler(space, COLLISION_TYPE_SLINGSHOT,
-                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
+                               COLLISION_TYPE_DESTROYABLE, NULL, NULL,
                                obstacle_collision_post_solve, NULL, NULL);
-    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_ENEMY,
-                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
+    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_DESTROYABLE,
+                               COLLISION_TYPE_DESTROYABLE, NULL, NULL,
                                obstacle_collision_post_solve, NULL, NULL);
-    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_GROUND,
-                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
+    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_STATIC,
+                               COLLISION_TYPE_DESTROYABLE, NULL, NULL,
                                obstacle_collision_post_solve, NULL, NULL);
-    cpSpaceAddCollisionHandler(space, COLLISION_TYPE_OBSTACLE,
-                               COLLISION_TYPE_OBSTACLE, NULL, NULL,
-                               obstacle_collision_post_solve, NULL, NULL);
-    
     
     for (uint32_t i = 0; i < level->obstacles->len; i++) {
         moment = cpMomentForBox(RECT_MASS, 40, 10);
@@ -216,7 +215,7 @@ void init_bodies(level_t *level) {
         
         body->shape = cpBoxShapeNew(body->body, 40, 10);
         cpShapeSetUserData(body->shape, body);
-        cpShapeSetCollisionType(body->shape, COLLISION_TYPE_OBSTACLE);
+        cpShapeSetCollisionType(body->shape, COLLISION_TYPE_DESTROYABLE);
         cpShapeSetElasticity(body->shape, 0.15);
         cpShapeSetFriction(body->shape, 0.8);
         cpSpaceAddShape(space, body->shape);
@@ -249,7 +248,7 @@ void init_bodies(level_t *level) {
         
         body->shape = cpBoxShapeNew(body->body, 50, 50);
         cpShapeSetUserData(body->shape, body);
-        cpShapeSetCollisionType(body->shape, COLLISION_TYPE_ENEMY);
+        cpShapeSetCollisionType(body->shape, COLLISION_TYPE_DESTROYABLE);
         cpShapeSetElasticity(body->shape, 0.45);
         cpShapeSetFriction(body->shape, 0.8);
         cpSpaceAddShape(space, body->shape);

@@ -20,7 +20,7 @@ function initEditor() {
     textures.ground = document.getElementById("ground");
     textures.snail = document.getElementById("snail");
     drawLevel(ctx, level);
-    window.onkeypress = onKeyDown;
+    window.onkeydown = onKeyDown;
     canvas.onmousedown = function (e) { onMouseDown(level, e); };
     canvas.onmouseup = onMouseUp;
 }
@@ -62,7 +62,7 @@ function onMouseMove(body, pos, e) {
     body.body.y = e.pageY - canvas.offsetTop;
     switch (body.type) {
         case "slingshot":
-            body.body.x += pos.x;
+            body.body.x += pos.x - 7;
             body.body.y += pos.y;
             break;
         case "obstacle":    
@@ -120,22 +120,18 @@ function onMouseUp(e) {
 
 function onKeyDown(e) {
     var c = String.fromCharCode(e.charCode);
-    switch (c) {
-        case 'd':
+    console.log(c);
+    switch (e.keyCode) {
+        case 68: // d
             selection.forEach(duplicateSelected);
             drawLevel(ctx, level);
             break;
-        default:
-            break;
-    }
-    
-    switch (e.keyCode) {
-        case 46:
+        case 46: // delete
             selection.forEach(deleteSelected);
             break;
         default:
+            console.log(e.keyCode);
             break;
-        break;
     }
 }
 
@@ -145,6 +141,10 @@ function beginSelection(pos, e) {
     ctx.fillStyle = selectionColor;
     ctx.fillRect(Math.min(pos.x, x), Math.min(pos.y, y), Math.abs(x - pos.x),
                  Math.abs(y - pos.y));
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(Math.min(pos.x, x), Math.min(pos.y, y), Math.abs(x - pos.x),
+                   Math.abs(y - pos.y));
 }
 
 function endSelection(pos, e) {
@@ -198,7 +198,14 @@ function drawSlingshot(ctx, slingshot) {
     ctx.save();
     ctx.translate(slingshot.x, slingshot.y);
     ctx.scale(1 / 3, 1 / 3);
-    ctx.drawImage(textures.slingshot, -7, -120);
+    ctx.drawImage(textures.slingshot, -20, -120);
+    if (bodyInSelection(slingshot)) {
+        ctx.fillStyle = selectionColor;
+        ctx.fillRect(-20, -120, 40, 120);
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-20, -120, 40, 120);
+    }
     ctx.restore();
 }
 
@@ -210,6 +217,9 @@ function drawEnemy(ctx, enemy) {
     if (bodyInSelection(enemy)) {
         ctx.fillStyle = selectionColor;
         ctx.fillRect(-25, -25, 50, 50);
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-25, -25, 50, 50);
     }
     ctx.restore();
 }
@@ -224,6 +234,9 @@ function drawBody(ctx, body) {
     if (bodyInSelection(body)) {
         ctx.fillStyle = selectionColor;
         ctx.fillRect(-50, -12.5, textures.block.width, textures.block.height);
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-50, -12.5, textures.block.width, textures.block.height);
     }
     ctx.restore();
 }

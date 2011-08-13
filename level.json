@@ -2,8 +2,32 @@
     "obstacles": [
         {
             "type": "block",
-            "x": 520,
-            "y": 435,
+            "x": 425,
+            "y": 345,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 388,
+            "y": 419,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 408,
+            "y": 370,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 446,
+            "y": 395,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 407,
+            "y": 395,
             "angle": 0
         },
         {
@@ -14,80 +38,27 @@
         },
         {
             "type": "block",
-            "x": 455,
-            "y": 420,
+            "x": 442,
+            "y": 370,
             "angle": 90
         },
         {
             "type": "block",
-            "x": 590,
-            "y": 207,
-            "angle": 0
-        },
-        {
-            "type": "block",
-            "x": 440,
-            "y": 395,
-            "angle": 0
-        },
-        {
-            "type": "block",
-            "x": 414,
-            "y": 276,
-            "angle": 0
-        },
-        {
-            "type": "block",
-            "x": 317,
-            "y": 125,
-            "angle": 0
-        },
-        {
-            "type": "block",
-            "x": 194,
-            "y": 100,
-            "angle": 0
-        },
-        {
-            "type": "block",
-            "x": 457,
-            "y": 107,
-            "angle": 0
-        },
-        {
-            "type": "block",
-            "x": 506,
-            "y": 237,
-            "angle": 0
-        },
-        {
-            "type": "block",
-            "x": 253,
-            "y": 188,
-            "angle": 0
-        },
-        {
-            "type": "block",
-            "x": 375,
-            "y": 204,
-            "angle": 0
+            "x": 465,
+            "y": 420,
+            "angle": 90
         }
     ],
     "enemies": [
         {
             "type": "normal",
-            "x": 342,
-            "y": 332
+            "x": 246,
+            "y": 412
         },
         {
             "type": "normal",
-            "x": 303,
-            "y": 251
-        },
-        {
-            "type": "normal",
-            "x": 303,
-            "y": 251
+            "x": 297,
+            "y": 412
         }
     ],
     "slingshot": {

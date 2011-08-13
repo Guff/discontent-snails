@@ -100,7 +100,6 @@ function onMouseDown(level, e) {
     if (e.ctrlKey)
         selection.push(body);
     else if (e.shiftKey) {
-        console.log(selection.indexOf(body));
         if (selection.indexOf(body) != -1)
             selection.pop(selection.indexOf(body));
         else
@@ -119,8 +118,6 @@ function onMouseUp(e) {
 }
 
 function onKeyDown(e) {
-    var c = String.fromCharCode(e.charCode);
-    console.log(c);
     switch (e.keyCode) {
         case 68: // d
             selection.forEach(duplicateSelected);
@@ -130,7 +127,6 @@ function onKeyDown(e) {
             selection.forEach(deleteSelected);
             break;
         default:
-            console.log(e.keyCode);
             break;
     }
 }

@@ -2,7 +2,9 @@ var canvas;
 var ctx;
 var textures;
 var level;
-var selection;
+var selection = [];
+var imageRect = null;
+var selectionColor = "rgba(180, 40, 40, 0.5)";
 
 function initEditor() {
     canvas = document.getElementById("leveleditor");
@@ -18,7 +20,7 @@ function initEditor() {
     textures.snail = document.getElementById("snail");
     drawLevel(ctx, level);
     window.onkeypress = onKeyDown;
-    canvas.onmousedown = function (e) onMouseDown(level, e);
+    canvas.onmousedown = function (e) {onMouseDown(level, e)};
     canvas.onmouseup = onMouseUp;
 }
 
@@ -27,7 +29,7 @@ function getBoundingBoxes(level) {
     
     boundingBoxes[0] = { type: "slingshot", body: level.slingshot,
                          x: level.slingshot.x - 7, y: level.slingshot.y - 40,
-                         w: 13, h: 40 };
+                         w: 14, h: 40 };
     for (var i = 0; i < level.obstacles.length; i++) {
         obstacle = level.obstacles[i];
         boundingBoxes.push({ type: "obstacle", body: obstacle,
@@ -86,11 +88,30 @@ function onMouseDown(level, e) {
         pos = ret[1];
         if (body) break;
     }
-    if (!body) return;
-    
-    selection = body;
+    if (!body) {
+        if (!e.ctrlKey)
+            selection = [];
+        drawLevel(ctx, level);
+        var pos = { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop };
+        canvas.onmousemove = function (e) { beginSelection(pos, e) };
+        canvas.onmouseup = function (e) { endSelection(pos, e) };
+        return;
+    }
+    if (e.ctrlKey)
+        selection.push(body);
+    else if (e.shiftKey) {
+        console.log(selection.indexOf(body));
+        if (selection.indexOf(body) != -1)
+            selection.pop(selection.indexOf(body));
+        else
+            selection.push(body);
+    } else
+        selection = [body];
+        
+    drawLevel(ctx, level);
     
     canvas.onmousemove = function (e) { onMouseMove(body, pos, e); };
+    canvas.onmouseup = onMouseUp;
 }
 
 function onMouseUp(e) {
@@ -101,12 +122,27 @@ function onKeyDown(e) {
     var c = String.fromCharCode(e.charCode);
     switch (c) {
         case 'd':
-            duplicateSelected(selection);
+            selection.forEach(duplicateSelected);
             drawLevel(ctx, level);
             break;
         default:
             break;
     }
+}
+
+function beginSelection(pos, e) {
+    var x = e.pageX - canvas.offsetLeft, y = e.pageY - canvas.offsetTop;
+    drawLevel(ctx, level);
+    ctx.fillStyle = selectionColor;
+    ctx.fillRect(Math.min(pos.x, x), Math.min(pos.y, y), Math.abs(x - pos.x),
+                 Math.abs(y - pos.y));
+}
+
+function endSelection(pos, e) {
+    drawLevel(ctx, level);
+    imageRect = null;
+    canvas.onmousemove = null;
+    selection = [];
 }
 
 function duplicateSelected(body) {
@@ -115,13 +151,22 @@ function duplicateSelected(body) {
     else if (body.type == "enemy")
         level.enemies.push(clone(body.body));
 }
+
+function bodyInSelection(body) {
+    for (var i = 0; i < selection.length; i++) {
+        if (body == selection[i].body)
+            return true;
+    }
+    return false;
+}
+
 function drawLevel(ctx, level) {
     //alert(ctx);
     ctx.drawImage(textures.bg, 0, 0);
     ctx.drawImage(textures.ground, 0, 430);
     drawSlingshot(ctx, level.slingshot);
-    level.obstacles.forEach(function (body) drawBody(ctx, body));
-    level.enemies.forEach(function (enemy) drawEnemy(ctx, enemy));
+    level.obstacles.forEach(function (body) { drawBody(ctx, body) });
+    level.enemies.forEach(function (enemy) { drawEnemy(ctx, enemy) });
 }
 
 function drawSlingshot(ctx, slingshot) {
@@ -137,6 +182,10 @@ function drawEnemy(ctx, enemy) {
     ctx.translate(enemy.x, enemy.y);
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(-25, -25, 50, 50);
+    if (bodyInSelection(enemy)) {
+        ctx.fillStyle = selectionColor;
+        ctx.fillRect(-25, -25, 50, 50);
+    }
     ctx.restore();
 }
 
@@ -147,6 +196,10 @@ function drawBody(ctx, body) {
     ctx.rotate(angle);
     ctx.scale(0.4, 0.4);
     ctx.drawImage(textures.block, -50, -12.5);
+    if (bodyInSelection(body)) {
+        ctx.fillStyle = selectionColor;
+        ctx.fillRect(-50, -12.5, textures.block.width, textures.block.height);
+    }
     ctx.restore();
 }
 

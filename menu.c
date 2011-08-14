@@ -25,7 +25,7 @@ void menu_show(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *event_queue) {
     ALLEGRO_BITMAP *bg = table_lookup(textures, "menu-bg");
     ALLEGRO_FONT *font = al_load_ttf_font("data/DejaVuSans.ttf", 12, 0);
     
-    ptr_array_t *level_data = level_data_query("levels/");
+    ptr_array_t *level_data = level_data_query("levels");
     
     bool running = true;
     ALLEGRO_EVENT ev;

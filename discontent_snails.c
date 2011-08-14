@@ -74,9 +74,10 @@ void body_free(body_t *body, bool free_bitmap) {
 void body_remove(body_t *body) {
     if (!body || body->removed)
         return;
-    
-    cpSpaceRemoveShape(space, body->shape);
-    cpSpaceRemoveBody(space, body->body);
+    if (body->shape)
+        cpSpaceRemoveShape(space, body->shape);
+    if (body->body)
+        cpSpaceRemoveBody(space, body->body);
     body->removed = true;
 }
 
@@ -89,10 +90,10 @@ void destroyable_collision_post_step(cpSpace *space, void *obj, void *data) {
         ptr_array_remove(enemies, body);
         if (!enemies->len)
             victorious = true;
-    } else
+    } else if (body->type == BODY_TYPE_OBSTACLE)
         ptr_array_remove(obstacles, body);
     
-    body_free(body, true);
+    //body_free(body, true);
 }
 
 void destroyable_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data) {
@@ -342,6 +343,8 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     scene = al_create_bitmap(al_get_display_width(display),
                              al_get_display_height(display));
     
+    al_set_system_mouse_cursor(display, ALLEGRO_SYSTEM_MOUSE_CURSOR_MOVE);
+    
     while (running) {
         al_wait_for_event(event_queue, &ev);
         switch (ev.type) {
@@ -419,18 +422,21 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     al_destroy_bitmap(scene);
     
     cpSpaceFree(space);
+    
+    al_set_system_mouse_cursor(display, ALLEGRO_SYSTEM_MOUSE_CURSOR_DEFAULT);
 }
 
 int main(int argc, char **argv) {
     al_init();
     
-    al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR | ALLEGRO_MIPMAP);
+    al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
     
     al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
     al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
     
     ALLEGRO_DISPLAY *display = al_create_display(WIDTH, HEIGHT);
     al_set_window_title(display, "discontent snails");
+    al_set_app_name("discontent-snails");
     ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
     
     al_init_image_addon();

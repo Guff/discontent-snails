@@ -39,7 +39,7 @@ void menu_show(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *event_queue) {
                     
                     al_draw_filled_rectangle(x0, y0, x1, y1, al_map_rgba(255, 255, 255, 200));
                     ALLEGRO_FONT *font = al_load_ttf_font("data/DejaVuSans.ttf", 12, 0);
-                    //printf("%s", level->name);
+                    printf("%i", level->num);
                     al_draw_text(font, al_map_rgb(0, 0, 0), x0 + 20, y0 + 20, 0, level->name);
                 }
                 al_flip_display();

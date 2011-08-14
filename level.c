@@ -38,8 +38,7 @@ ptr_array_t* level_data_query(const char *path) {
             goto name_lbl;
         }
         
-        level->name = json_string_value(name_obj);
-        //printf("%s\n", level->name);
+        level->name = strdup(json_string_value(name_obj));
         json_t *num_obj = json_object_get(root, "num");
         if (!json_is_integer(num_obj)) {
             fprintf(stderr, "\"name\" is not an integer\n");

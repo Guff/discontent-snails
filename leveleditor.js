@@ -6,6 +6,7 @@ var selection = [];
 var imageRect = null;
 var selectionColor = "rgba(180, 40, 40, 0.5)";
 var borderColor = "rgba(160, 20, 20, 0.65)";
+var keyState = null;
 
 function initEditor() {
     canvas = document.getElementById("leveleditor");
@@ -90,6 +91,9 @@ function onMouseMove(body, pos, e) {
 function onMouseDown(level, e) {
     var body, pos;
     var boundingBoxes = getBoundingBoxes(level);
+    
+    keyState = null;
+    
     for (i = 0; i < boundingBoxes.length; i++) {
         var ret = mouseOverBody(boundingBoxes[i], e);
         body = ret[0];
@@ -125,17 +129,70 @@ function onMouseUp(e) {
     canvas.onmousemove = null;
 }
 
+var ev;
 function onKeyDown(e) {
-    switch (e.keyCode) {
-        case 68: // d
-            selection.forEach(duplicateSelected);
-            drawLevel(ctx, level);
+    switch(keyState) {
+        case null:
+            switch (e.keyCode) {
+                case 68: // d
+                    selection.forEach(duplicateSelected);
+                    drawLevel(ctx, level);
+                    break;
+                case 82: // r
+                    keyState = "rot";
+                    break;
+                case 46: // delete
+                    selection.forEach(deleteSelected);
+                    drawLevel(ctx, level);
+                    break;
+                case 37: // left
+                    selection.forEach(function (body) {
+                        body.body.x -= e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 39: // right
+                    selection.forEach(function (body) {
+                        body.body.x += e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 38: // up
+                    selection.forEach(function (body) {
+                        body.body.y -= e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 40: // down
+                    selection.forEach(function (body) {
+                        body.body.y += e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                default:
+                    console.log(e.keyCode);
+                    break;
+            }
             break;
-        case 46: // delete
-            selection.forEach(deleteSelected);
-            break;
-        default:
-            break;
+        case "rot":
+            switch (e.keyCode) {
+                case 37: // left
+                    selection.forEach(function (body) {
+                        body.body.angle -= e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 39: // right
+                    selection.forEach(function (body) {
+                        body.body.angle += e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 27: // escape
+                    keyState = null;
+                default:
+                    break;
+            }
     }
 }
 
@@ -165,7 +222,6 @@ function deleteSelected(body) {
         if (body.type == "enemy")
             level.enemies.splice(level.enemies.indexOf(body.body), 1);
         selection = [];
-        drawLevel(ctx, level);
     }
 }
 
@@ -177,7 +233,6 @@ function duplicateSelected(body) {
             level.enemies.push(clone(body.body));
     }
     selection = [];
-    drawLevel(ctx, level);
 }
 
 function bodyInSelection(body) {
@@ -213,8 +268,10 @@ function drawSlingshot(ctx, slingshot) {
 }
 
 function drawEnemy(ctx, enemy) {
+    var angle = enemy.angle / 180 * Math.PI;
     ctx.save();
     ctx.translate(enemy.x, enemy.y);
+    ctx.rotate(angle);
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(-25, -25, 50, 50);
     if (bodyInSelection(enemy)) {

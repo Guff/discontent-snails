@@ -6,6 +6,7 @@ var selection = [];
 var imageRect = null;
 var selectionColor = "rgba(180, 40, 40, 0.5)";
 var borderColor = "rgba(160, 20, 20, 0.65)";
+var keyState = null;
 
 function initEditor() {
     canvas = document.getElementById("leveleditor");
@@ -23,6 +24,15 @@ function initEditor() {
     window.onkeydown = onKeyDown;
     canvas.onmousedown = function (e) { onMouseDown(level, e); };
     canvas.onmouseup = onMouseUp;
+}
+
+function boxesIntersect(b0, b1) {
+    if (b0.y + b0.h <= b1.y || b0.y >= b1.y + b1.h)
+        return false;
+    if (b0.x + b0.w <= b1.x || b0.x >= b1.x + b1.w)
+        return false;
+        
+    return true;
 }
 
 function getBoundingBoxes(level) {
@@ -43,9 +53,13 @@ function getBoundingBoxes(level) {
     }
     for (var i = 0; i < level.enemies.length; i++) {
         enemy = level.enemies[i];
-        boundingBoxes.push({ type: "enemy", body: enemy, x: enemy.x - 25,
-                             y: enemy.y - 25,
-                             w: 50, h: 50 });
+        var cos =  Math.cos(obstacle.angle / 180 * Math.PI);
+        var sin = Math.sin(obstacle.angle / 180 * Math.PI);
+        var w = cos * 50 + sin * 50;
+        var h = sin * 50 + cos * 50;
+        boundingBoxes.push({ type: "enemy", body: enemy, x: enemy.x - w / 2,
+                             y: enemy.y - h / 2,
+                             w: w, h: h });
     }
     return boundingBoxes;
 }
@@ -90,6 +104,9 @@ function onMouseMove(body, pos, e) {
 function onMouseDown(level, e) {
     var body, pos;
     var boundingBoxes = getBoundingBoxes(level);
+    
+    keyState = null;
+    
     for (i = 0; i < boundingBoxes.length; i++) {
         var ret = mouseOverBody(boundingBoxes[i], e);
         body = ret[0];
@@ -125,17 +142,70 @@ function onMouseUp(e) {
     canvas.onmousemove = null;
 }
 
+var ev;
 function onKeyDown(e) {
-    switch (e.keyCode) {
-        case 68: // d
-            selection.forEach(duplicateSelected);
-            drawLevel(ctx, level);
+    switch(keyState) {
+        case null:
+            switch (e.keyCode) {
+                case 68: // d
+                    selection.forEach(duplicateSelected);
+                    drawLevel(ctx, level);
+                    break;
+                case 82: // r
+                    keyState = "rot";
+                    break;
+                case 46: // delete
+                    selection.forEach(deleteSelected);
+                    drawLevel(ctx, level);
+                    break;
+                case 37: // left
+                    selection.forEach(function (body) {
+                        body.body.x -= e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 39: // right
+                    selection.forEach(function (body) {
+                        body.body.x += e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 38: // up
+                    selection.forEach(function (body) {
+                        body.body.y -= e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 40: // down
+                    selection.forEach(function (body) {
+                        body.body.y += e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                default:
+                    //console.log(e.keyCode);
+                    break;
+            }
             break;
-        case 46: // delete
-            selection.forEach(deleteSelected);
-            break;
-        default:
-            break;
+        case "rot":
+            switch (e.keyCode) {
+                case 37: // left
+                    selection.forEach(function (body) {
+                        body.body.angle -= e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 39: // right
+                    selection.forEach(function (body) {
+                        body.body.angle += e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 27: // escape
+                    keyState = null;
+                default:
+                    break;
+            }
     }
 }
 
@@ -152,10 +222,19 @@ function beginSelection(pos, e) {
 }
 
 function endSelection(pos, e) {
+    var x = Math.min(pos.x, e.pageX - canvas.offsetLeft),
+        y = Math.min(pos.y, e.pageY - canvas.offsetTop),
+        w = Math.abs(e.pageX - canvas.offsetLeft - pos.x),
+        h = Math.abs(e.pageY - canvas.offsetTop - pos.y);
+    var selectionBox = { x: x, y: y, w: w, h: h };
+    
+    selection = getBoundingBoxes(level).filter(function (box) {
+        return boxesIntersect(selectionBox, box);
+    });
+    
     drawLevel(ctx, level);
     imageRect = null;
     canvas.onmousemove = null;
-    selection = [];
 }
 
 function deleteSelected(body) {
@@ -165,7 +244,6 @@ function deleteSelected(body) {
         if (body.type == "enemy")
             level.enemies.splice(level.enemies.indexOf(body.body), 1);
         selection = [];
-        drawLevel(ctx, level);
     }
 }
 
@@ -177,7 +255,6 @@ function duplicateSelected(body) {
             level.enemies.push(clone(body.body));
     }
     selection = [];
-    drawLevel(ctx, level);
 }
 
 function bodyInSelection(body) {
@@ -213,8 +290,10 @@ function drawSlingshot(ctx, slingshot) {
 }
 
 function drawEnemy(ctx, enemy) {
+    var angle = enemy.angle / 180 * Math.PI;
     ctx.save();
     ctx.translate(enemy.x, enemy.y);
+    ctx.rotate(angle);
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(-25, -25, 50, 50);
     if (bodyInSelection(enemy)) {

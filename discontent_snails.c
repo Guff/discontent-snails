@@ -20,7 +20,6 @@
 #define WIDTH           640
 #define HEIGHT          480
 
-cpSpace *space;
 
 typedef enum {
     BODY_TYPE_SNAIL,
@@ -46,18 +45,26 @@ enum {
     COLLISION_TYPE_STATIC
 };
 
-ALLEGRO_BITMAP *snail_bitmap;
-ALLEGRO_BITMAP *bg_bitmap;
-ALLEGRO_BITMAP *ground_bitmap;
-ALLEGRO_BITMAP *slingshot_bitmap;
-
+cpSpace *space;
 cpConstraint *spring;
-body_t *snail, *slingshot, *ground_body;
+body_t *snail, *slingshot, *ground;
+table_t *textures;
 ptr_array_t *obstacles;
 ptr_array_t *enemies;
 
 body_t* body_new(void) {
     return calloc(1, sizeof(body_t));
+}
+
+void body_free(body_t *body) {
+    if (body->shape)
+        cpShapeFree(body->shape);
+    if (body->body)
+        cpBodyFree(body->body);
+    if (body->bitmap)
+        al_destroy_bitmap(body->bitmap);
+    
+    free(body);
 }
 
 void body_remove(body_t *body) {
@@ -116,19 +123,19 @@ void init_world(level_t *level) {
     space = cpSpaceNew();
     
     slingshot = body_new();
-    ground_body = body_new();
+    ground = body_new();
     
     cpSpaceSetGravity(space, cpv(0, 200));
-    cpShape *ground = cpSegmentShapeNew(space->staticBody, cpv(-100, HEIGHT - 40),
-                                        cpv(WIDTH + 100, HEIGHT - 40), 0);
-    ground_body->type = BODY_TYPE_GROUND;
-    ground_body->shape = ground;
-    cpShapeSetCollisionType(ground, COLLISION_TYPE_STATIC);
-    cpShapeSetUserData(ground, ground_body);
-    cpShapeSetElasticity(ground, 0.3);
-    cpShapeSetFriction(ground, 0.8);
+    ground->type = BODY_TYPE_GROUND;
+    ground->shape = cpSegmentShapeNew(space->staticBody,
+                                           cpv(-100, HEIGHT - 40),
+                                           cpv(WIDTH + 100, HEIGHT - 40), 0);
+    cpShapeSetCollisionType(ground->shape, COLLISION_TYPE_STATIC);
+    cpShapeSetUserData(ground->shape, ground);
+    cpShapeSetElasticity(ground->shape, 0.3);
+    cpShapeSetFriction(ground->shape, 0.8);
     
-    cpSpaceAddShape(space, ground);
+    cpSpaceAddShape(space, ground->shape);
 
     slingshot->body = cpBodyNewStatic();
     slingshot->shape = cpSegmentShapeNew(slingshot->body, cpv(0, 0),
@@ -139,16 +146,14 @@ void init_world(level_t *level) {
     cpSpaceAddShape(space, slingshot->shape);
     cpSpaceReindexStatic(space);
     
-    bg_bitmap = al_load_bitmap("data/sky-bg.png");
-    ground_bitmap = al_load_bitmap("data/ground.png");
-    slingshot_bitmap = al_load_bitmap("data/slingshot.png");
+    ground->bitmap = table_lookup(textures, "ground");
     
     al_set_target_bitmap(slingshot->bitmap);
-    al_draw_scaled_bitmap(slingshot_bitmap, 0, 0, 40, 120, 0, 0, 13, 40, 0);
+    al_draw_scaled_bitmap(table_lookup(textures, "slingshot"), 0, 0, 40, 120, 0,
+                          0, 13, 40, 0);
 }
 
 void init_bodies(level_t *level) {
-    table_t *textures = textures_load();
     
     snail = body_new();
     obstacles = ptr_array_new();
@@ -182,7 +187,8 @@ void init_bodies(level_t *level) {
     cpSpaceAddConstraint(space, spring);
 
     al_set_target_bitmap(snail->bitmap);
-    al_draw_scaled_bitmap(snail_bitmap, 0, 0, 120, 120, 0, 0, 30, 30, 0);
+    al_draw_scaled_bitmap(table_lookup(textures, "snail-normal"), 0, 0, 120,
+                          120, 0, 0, 30, 30, 0);
     
     cpShapeSetCollisionType(snail->shape, COLLISION_TYPE_SNAIL);
     cpShapeSetCollisionType(slingshot->shape, COLLISION_TYPE_SLINGSHOT);
@@ -263,9 +269,9 @@ void init_bodies(level_t *level) {
 
 void draw_frame(ALLEGRO_DISPLAY *display) {
     al_set_target_backbuffer(display);
-    al_draw_bitmap(bg_bitmap, 0, 0, 0);
+    al_draw_bitmap(table_lookup(textures, "sky-bg"), 0, 0, 0);
     
-    al_draw_bitmap(ground_bitmap, 0, HEIGHT - 50, 0);
+    al_draw_bitmap(ground->bitmap, 0, HEIGHT - 50, 0);
     
     cpVect snail_pos = cpBodyGetPos(snail->body);
     cpFloat snail_ang = cpBodyGetAngle(snail->body);
@@ -367,6 +373,19 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     
     al_unregister_event_source(event_queue, al_get_timer_event_source(frames_timer));
     al_unregister_event_source(event_queue, al_get_timer_event_source(phys_timer));
+    
+    for (uint i = 0; i < obstacles->len; i++)
+        body_free(ptr_array_index(obstacles, i));
+    
+    for (uint i = 0; i < enemies->len; i++)
+        body_free(ptr_array_index(enemies, i));
+    
+    body_free(ground);
+    body_free(snail);
+    body_free(slingshot);
+    
+    ptr_array_free(obstacles, false);
+    ptr_array_free(enemies, false);
 }
 
 int main(int argc, char **argv) {
@@ -393,7 +412,7 @@ int main(int argc, char **argv) {
     al_register_event_source(event_queue, al_get_keyboard_event_source());
     al_register_event_source(event_queue, al_get_mouse_event_source());
 
-    snail_bitmap = al_load_bitmap("data/snail-normal.png");
+    textures = textures_load();
     
     menu_show(display, event_queue);
     

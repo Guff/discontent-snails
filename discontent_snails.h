@@ -6,6 +6,8 @@
 
 #define FPS             30.0
 
+extern table_t *textures;
+
 void level_play(level_t *level, ALLEGRO_DISPLAY *display, 
                 ALLEGRO_EVENT_QUEUE *event_queue);
 

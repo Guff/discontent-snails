@@ -4,7 +4,9 @@
 
 #include "textures.h"
 
-const char * const texture_files[] = { "wooden-block-40x10" };
+const char * const texture_files[] = { "wooden-block-40x10", "snail-normal",
+                                       "ground", "menu-bg", "sky-bg",
+                                       "slingshot" };
 
 table_t *textures_load(void) {
     table_t *textures = table_new();

@@ -26,6 +26,15 @@ function initEditor() {
     canvas.onmouseup = onMouseUp;
 }
 
+function boxesIntersect(b0, b1) {
+    if (b0.y + b0.h <= b1.y || b0.y >= b1.y + b1.h)
+        return false;
+    if (b0.x + b0.w <= b1.x || b0.x >= b1.x + b1.w)
+        return false;
+        
+    return true;
+}
+
 function getBoundingBoxes(level) {
     boundingBoxes = new Array();
     
@@ -44,9 +53,13 @@ function getBoundingBoxes(level) {
     }
     for (var i = 0; i < level.enemies.length; i++) {
         enemy = level.enemies[i];
-        boundingBoxes.push({ type: "enemy", body: enemy, x: enemy.x - 25,
-                             y: enemy.y - 25,
-                             w: 50, h: 50 });
+        var cos =  Math.cos(obstacle.angle / 180 * Math.PI);
+        var sin = Math.sin(obstacle.angle / 180 * Math.PI);
+        var w = cos * 50 + sin * 50;
+        var h = sin * 50 + cos * 50;
+        boundingBoxes.push({ type: "enemy", body: enemy, x: enemy.x - w / 2,
+                             y: enemy.y - h / 2,
+                             w: w, h: h });
     }
     return boundingBoxes;
 }
@@ -170,7 +183,7 @@ function onKeyDown(e) {
                     drawLevel(ctx, level);
                     break;
                 default:
-                    console.log(e.keyCode);
+                    //console.log(e.keyCode);
                     break;
             }
             break;
@@ -209,10 +222,19 @@ function beginSelection(pos, e) {
 }
 
 function endSelection(pos, e) {
+    var x = Math.min(pos.x, e.pageX - canvas.offsetLeft),
+        y = Math.min(pos.y, e.pageY - canvas.offsetTop),
+        w = Math.abs(e.pageX - canvas.offsetLeft - pos.x),
+        h = Math.abs(e.pageY - canvas.offsetTop - pos.y);
+    var selectionBox = { x: x, y: y, w: w, h: h };
+    
+    selection = getBoundingBoxes(level).filter(function (box) {
+        return boxesIntersect(selectionBox, box);
+    });
+    
     drawLevel(ctx, level);
     imageRect = null;
     canvas.onmousemove = null;
-    selection = [];
 }
 
 function deleteSelected(body) {

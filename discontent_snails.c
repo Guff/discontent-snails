@@ -58,18 +58,16 @@ body_t* body_new(void) {
     return calloc(1, sizeof(body_t));
 }
 
-void body_free(body_t *body) {
-    if (body->shape) {
+void body_free(body_t *body, bool free_bitmap) {
+    if (body->shape)
         cpShapeFree(body->shape);
-        body->shape = NULL;
-    }
-    if (body->body) {
+    if (body->body)
         cpBodyFree(body->body);
-        body->body = NULL;
+    // some of the bitmaps are handled by textures_load(); don't free those
+    if (free_bitmap) {
+        if (body->bitmap)
+            al_destroy_bitmap(body->bitmap);
     }
-    
-    // the bitmaps are all handled by textures_load(), so don't free them
-    
     free(body);
 }
 
@@ -93,6 +91,8 @@ void destroyable_collision_post_step(cpSpace *space, void *obj, void *data) {
             victorious = true;
     } else
         ptr_array_remove(obstacles, body);
+    
+    body_free(body, true);
 }
 
 void destroyable_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data) {
@@ -404,19 +404,21 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     al_unregister_event_source(event_queue, al_get_timer_event_source(phys_timer));
     
     for (uint i = 0; i < obstacles->len; i++)
-        body_free(ptr_array_index(obstacles, i));
+        body_free(ptr_array_index(obstacles, i), true);
     
     for (uint i = 0; i < enemies->len; i++)
-        body_free(ptr_array_index(enemies, i));
+        body_free(ptr_array_index(enemies, i), true);
     
-    body_free(ground);
-    body_free(snail);
-    body_free(slingshot);
+    body_free(ground, false);
+    body_free(snail, true);
+    body_free(slingshot, true);
     
     ptr_array_free(obstacles, false);
     ptr_array_free(enemies, false);
     
     al_destroy_bitmap(scene);
+    
+    cpSpaceFree(space);
 }
 
 int main(int argc, char **argv) {

@@ -55,12 +55,14 @@
         {
             "type": "normal",
             "x": 246,
-            "y": 412
+            "y": 412,
+            "angle": 0
         },
         {
             "type": "normal",
             "x": 297,
-            "y": 412
+            "y": 412,
+            "angle": 0
         }
     ],
     "slingshot": {

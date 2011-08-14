@@ -51,6 +51,7 @@ body_t *snail, *slingshot, *ground;
 table_t *textures;
 ptr_array_t *obstacles;
 ptr_array_t *enemies;
+bool victorious;
 
 body_t* body_new(void) {
     return calloc(1, sizeof(body_t));
@@ -76,18 +77,20 @@ void body_remove(body_t *body) {
     body->removed = true;
 }
 
-void obstacle_collision_post_step(cpSpace *space, void *obj, void *data) {
+void destroyable_collision_post_step(cpSpace *space, void *obj, void *data) {
     body_t *body = data;
     if (!body || !body->shape || !body->body)
         return;
     body_remove(body);
-    if (body->type == BODY_TYPE_ENEMY)
+    if (body->type == BODY_TYPE_ENEMY) {
         ptr_array_remove(enemies, body);
-    else
+        if (!enemies->len)
+            victorious = true;
+    } else
         ptr_array_remove(obstacles, body);
 }
 
-void obstacle_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data) {
+void destroyable_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data) {
     CP_ARBITER_GET_SHAPES(arb, a, b);
     CP_ARBITER_GET_BODIES(arb, b0, b1);
     
@@ -98,7 +101,7 @@ void obstacle_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data) {
     body->damage += MAX(cpvlength(impulse) - 150, 0) / 200;
     
     if (body->damage >= 1) {
-        cpSpaceAddPostStepCallback(space, obstacle_collision_post_step, arb,
+        cpSpaceAddPostStepCallback(space, destroyable_collision_post_step, arb,
                                    body);
     }
 }
@@ -198,16 +201,16 @@ void init_bodies(level_t *level) {
                                slingshot_collision_pre_solve, NULL, NULL, NULL);
     cpSpaceAddCollisionHandler(space, COLLISION_TYPE_SNAIL,
                                COLLISION_TYPE_DESTROYABLE, NULL, NULL,
-                               obstacle_collision_post_solve, NULL, NULL);
+                               destroyable_collision_post_solve, NULL, NULL);
     cpSpaceAddCollisionHandler(space, COLLISION_TYPE_SLINGSHOT,
                                COLLISION_TYPE_DESTROYABLE, NULL, NULL,
-                               obstacle_collision_post_solve, NULL, NULL);
+                               destroyable_collision_post_solve, NULL, NULL);
     cpSpaceAddCollisionHandler(space, COLLISION_TYPE_DESTROYABLE,
                                COLLISION_TYPE_DESTROYABLE, NULL, NULL,
-                               obstacle_collision_post_solve, NULL, NULL);
+                               destroyable_collision_post_solve, NULL, NULL);
     cpSpaceAddCollisionHandler(space, COLLISION_TYPE_STATIC,
                                COLLISION_TYPE_DESTROYABLE, NULL, NULL,
-                               obstacle_collision_post_solve, NULL, NULL);
+                               destroyable_collision_post_solve, NULL, NULL);
     
     for (uint32_t i = 0; i < level->obstacles->len; i++) {
         moment = cpMomentForBox(RECT_MASS, 40, 10);
@@ -302,6 +305,7 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
 
 void level_play(level_t *level, ALLEGRO_DISPLAY *display, 
                 ALLEGRO_EVENT_QUEUE *event_queue) {
+    victorious = false;
     bool running = true;
     bool pressed = false;
     ALLEGRO_EVENT ev;
@@ -369,6 +373,9 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
             default:
                 break;
         }
+        
+        if (victorious)
+            running = false;
     }
     
     al_unregister_event_source(event_queue, al_get_timer_event_source(frames_timer));

@@ -75,7 +75,6 @@ void menu_show(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *event_queue) {
             {
                 uint prev_selection = selection;
                 selection = pointer_over_level(level_data->len, ev);
-                printf("%i %i\n", prev_selection, selection);
                 if (selection && selection == prev_selection) {
                     level_data_t *level_datum = ptr_array_index(level_data,
                                                                 selection - 1);

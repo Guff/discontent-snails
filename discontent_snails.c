@@ -4,24 +4,23 @@
 #include <stdbool.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_ttf.h>
+#include <allegro5/allegro_primitives.h>
 #include <chipmunk/chipmunk.h>
 
-#include "level.h"
+#include "menu.h"
 #include "textures.h"
+#include "discontent_snails.h"
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-#define FPS             30.0
 #define PHYSICS_STEP    (1 / 250.0)
 #define RECT_MASS       1
 #define WIDTH           640
 #define HEIGHT          480
 
 cpSpace *space;
-
-static bool running = true;
-static bool pressed = false;
 
 typedef enum {
     BODY_TYPE_SNAIL,
@@ -295,39 +294,23 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
     al_flip_display();
 }
 
-int main(int argc, char **argv) {
-    al_init();
-    
-    al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR | ALLEGRO_MIPMAP);
-    
-    al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
-    al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
-    
-    ALLEGRO_DISPLAY *display = al_create_display(WIDTH, HEIGHT);
-    ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
+void level_play(level_t *level, ALLEGRO_DISPLAY *display, 
+                ALLEGRO_EVENT_QUEUE *event_queue) {
+    bool running = true;
+    bool pressed = false;
     ALLEGRO_EVENT ev;
-    ALLEGRO_TIMER *frames_timer = al_create_timer(1 / FPS);
-    ALLEGRO_TIMER *phys_timer = al_create_timer(PHYSICS_STEP);
-    
-    al_init_image_addon();
-    al_install_keyboard();
-    al_install_mouse();
-    
-    al_register_event_source(event_queue, al_get_display_event_source(display));
-    al_register_event_source(event_queue, al_get_timer_event_source(frames_timer));
-    al_register_event_source(event_queue, al_get_timer_event_source(phys_timer));
-    al_register_event_source(event_queue, al_get_keyboard_event_source());
-    al_register_event_source(event_queue, al_get_mouse_event_source());
-    
-    al_start_timer(frames_timer);
-    al_start_timer(phys_timer);
-    
-    snail_bitmap = al_load_bitmap("data/snail-normal.png");
-    
-    level_t *level = level_parse("level.json");
     
     init_world(level);
     init_bodies(level);
+    
+    ALLEGRO_TIMER *frames_timer = al_create_timer(1 / FPS);
+    ALLEGRO_TIMER *phys_timer = al_create_timer(PHYSICS_STEP);
+    
+    al_register_event_source(event_queue, al_get_timer_event_source(frames_timer));
+    al_register_event_source(event_queue, al_get_timer_event_source(phys_timer));
+    
+    al_start_timer(frames_timer);
+    al_start_timer(phys_timer);
     
     while (running) {
         al_wait_for_event(event_queue, &ev);
@@ -381,6 +364,38 @@ int main(int argc, char **argv) {
                 break;
         }
     }
+    
+    al_unregister_event_source(event_queue, al_get_timer_event_source(frames_timer));
+    al_unregister_event_source(event_queue, al_get_timer_event_source(phys_timer));
+}
+
+int main(int argc, char **argv) {
+    al_init();
+    
+    al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR | ALLEGRO_MIPMAP);
+    
+    al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
+    al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
+    
+    ALLEGRO_DISPLAY *display = al_create_display(WIDTH, HEIGHT);
+    al_set_window_title(display, "discontent snails");
+    ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
+    
+    al_init_image_addon();
+    al_init_primitives_addon();
+    al_init_font_addon();
+    al_init_ttf_addon();
+    
+    al_install_keyboard();
+    al_install_mouse();
+    
+    al_register_event_source(event_queue, al_get_display_event_source(display));
+    al_register_event_source(event_queue, al_get_keyboard_event_source());
+    al_register_event_source(event_queue, al_get_mouse_event_source());
+
+    snail_bitmap = al_load_bitmap("data/snail-normal.png");
+    
+    menu_show(display, event_queue);
     
     al_shutdown_image_addon();
     

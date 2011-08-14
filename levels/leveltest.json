@@ -1,4 +1,6 @@
 {
+    "name": "Test level",
+    "num": 1,
     "obstacles": [
         {
             "type": "block",

@@ -8,6 +8,12 @@ typedef struct {
 } slingshot_t;
 
 typedef struct {
+    const char *name;
+    uint16_t num;
+    const char *filename;
+} level_data_t;
+
+typedef struct {
     ptr_array_t *obstacles;
     ptr_array_t *enemies;
     slingshot_t slingshot;
@@ -33,6 +39,8 @@ typedef struct {
     enemy_type_t type;
     double x, y;
 } enemy_t;
+
+ptr_array_t* level_data_query(const char *path);
 
 void level_free(level_t *level);
 level_t* level_parse(const char *filename);

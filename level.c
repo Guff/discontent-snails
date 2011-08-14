@@ -2,10 +2,72 @@
 #include <string.h>
 #include <stdbool.h>
 #include <jansson.h>
+#include <allegro5/allegro.h>
 
 #include "level.h"
 
 #define LVL_FSIZE       8192
+
+static level_data_t* level_data_new(void) {
+    return calloc(1, sizeof(level_data_t));
+}
+
+ptr_array_t* level_data_query(const char *path) {
+    ptr_array_t *level_data = ptr_array_new();
+    ALLEGRO_FS_ENTRY *dir = al_create_fs_entry(path);
+    al_open_directory(dir);
+    ALLEGRO_FS_ENTRY *entry;
+    while ((entry = al_read_directory(dir))) {
+        level_data_t *level = level_data_new();
+        level->filename = al_get_fs_entry_name(entry);
+        
+        bool parse_error = false;
+        json_error_t error;
+        json_t *root = json_load_file(level->filename, 0, &error);
+        
+        if (!root) {
+            fprintf(stderr, "error on line %d: %s\n", error.line, error.text);
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        json_t *name_obj = json_object_get(root, "name");
+        if (!json_is_string(name_obj)) {
+            fprintf(stderr, "\"name\" is not a string\n");
+            parse_error = true;
+            goto name_lbl;
+        }
+        
+        level->name = json_string_value(name_obj);
+        //printf("%s\n", level->name);
+        json_t *num_obj = json_object_get(root, "num");
+        if (!json_is_integer(num_obj)) {
+            fprintf(stderr, "\"name\" is not an integer\n");
+            parse_error = true;
+            goto num_lbl;
+        }
+        
+        level->num = json_integer_value(num_obj);
+num_lbl:
+        json_decref(num_obj);
+name_lbl:
+        json_decref(name_obj);
+root_lbl:
+        json_decref(root);
+        
+        if (parse_error) {
+            ptr_array_free(level_data, true);
+            level_data = NULL;
+            break;
+        } else {
+            ptr_array_add(level_data, level);
+        }
+    }
+    
+    al_close_directory(dir);
+    
+    return level_data;
+}
 
 void level_free(level_t *level) {
     ptr_array_free(level->obstacles, true);
@@ -13,7 +75,7 @@ void level_free(level_t *level) {
     free(level);
 }
 
-level_t *level_parse(const char *filename) {
+level_t* level_parse(const char *filename) {
     level_t *level = malloc(sizeof(level_t));
     json_error_t error;
     json_t *root = json_load_file(filename, 0, &error);

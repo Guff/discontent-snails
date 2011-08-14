@@ -1,0 +1,70 @@
+{
+    "name": "Test level 2",
+    "num": 2,
+    "obstacles": [
+        {
+            "type": "block",
+            "x": 225,
+            "y": 345,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 388,
+            "y": 419,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 408,
+            "y": 370,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 446,
+            "y": 395,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 407,
+            "y": 395,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 425,
+            "y": 420,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 442,
+            "y": 370,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 465,
+            "y": 420,
+            "angle": 90
+        }
+    ],
+    "enemies": [
+        {
+            "type": "normal",
+            "x": 246,
+            "y": 412
+        },
+        {
+            "type": "normal",
+            "x": 297,
+            "y": 412
+        }
+    ],
+    "slingshot": {
+        "x": 120,
+        "y": 440
+    }
+}

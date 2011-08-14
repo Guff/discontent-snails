@@ -20,7 +20,6 @@
 #define WIDTH           640
 #define HEIGHT          480
 
-
 typedef enum {
     BODY_TYPE_SNAIL,
     BODY_TYPE_SLINGSHOT,
@@ -47,6 +46,8 @@ enum {
 
 cpSpace *space;
 cpConstraint *spring;
+cpFloat zoom;
+ALLEGRO_BITMAP *scene;
 body_t *snail, *slingshot, *ground;
 table_t *textures;
 ptr_array_t *obstacles;
@@ -58,12 +59,16 @@ body_t* body_new(void) {
 }
 
 void body_free(body_t *body) {
-    if (body->shape)
+    if (body->shape) {
         cpShapeFree(body->shape);
-    if (body->body)
+        body->shape = NULL;
+    }
+    if (body->body) {
         cpBodyFree(body->body);
-    if (body->bitmap)
-        al_destroy_bitmap(body->bitmap);
+        body->body = NULL;
+    }
+    
+    // the bitmaps are all handled by textures_load(), so don't free them
     
     free(body);
 }
@@ -133,6 +138,7 @@ void init_world(level_t *level) {
     ground->shape = cpSegmentShapeNew(space->staticBody,
                                            cpv(-100, HEIGHT - 40),
                                            cpv(WIDTH + 100, HEIGHT - 40), 0);
+    
     cpShapeSetCollisionType(ground->shape, COLLISION_TYPE_STATIC);
     cpShapeSetUserData(ground->shape, ground);
     cpShapeSetElasticity(ground->shape, 0.3);
@@ -271,7 +277,7 @@ void init_bodies(level_t *level) {
 }
 
 void draw_frame(ALLEGRO_DISPLAY *display) {
-    al_set_target_backbuffer(display);
+    al_set_target_bitmap(scene);
     al_draw_bitmap(table_lookup(textures, "sky-bg"), 0, 0, 0);
     
     al_draw_bitmap(ground->bitmap, 0, HEIGHT - 50, 0);
@@ -300,6 +306,16 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
         al_draw_rotated_bitmap(body->bitmap, 25, 25, pos.x, pos.y, angle, 0);
     }
     
+    al_set_target_backbuffer(display);
+    al_clear_to_color(al_map_rgb(0, 0, 0));
+    al_draw_scaled_bitmap(scene, 0, 0,
+                          zoom * al_get_display_width(display),
+                          zoom * al_get_display_height(display),
+                          0, 0,
+                          al_get_display_width(display),
+                          al_get_display_height(display),
+                          0);
+    
     al_flip_display();
 }
 
@@ -308,6 +324,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     victorious = false;
     bool running = true;
     bool pressed = false;
+    zoom = 1;
     ALLEGRO_EVENT ev;
     
     init_world(level);
@@ -321,6 +338,9 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     
     al_start_timer(frames_timer);
     al_start_timer(phys_timer);
+    
+    scene = al_create_bitmap(al_get_display_width(display),
+                             al_get_display_height(display));
     
     while (running) {
         al_wait_for_event(event_queue, &ev);
@@ -356,17 +376,19 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
                 }
                 break;
             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-                {
+            {
                 cpVect pos = cpv(ev.mouse.x, ev.mouse.y);
                 
                 if (cpShapePointQuery(snail->shape, pos))
                     pressed = true;
-                }
+            }
                 break;
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
                 pressed = false;
                 break;
             case ALLEGRO_EVENT_MOUSE_AXES:
+                if (ev.mouse.dz)
+                    zoom = MAX(MIN(4, zoom + ev.mouse.dz / 5.0), 0.25);
                 if (pressed)
                     cpBodySetPos(snail->body, cpv(ev.mouse.x, ev.mouse.y));
                 break;
@@ -393,6 +415,8 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     
     ptr_array_free(obstacles, false);
     ptr_array_free(enemies, false);
+    
+    al_destroy_bitmap(scene);
 }
 
 int main(int argc, char **argv) {

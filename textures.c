@@ -4,7 +4,7 @@
 
 #include "textures.h"
 
-const char * const texture_files[] = { "wooden-block-40x10", "snail-normal",
+const char * const texture_files[] = { "wooden-block-50x10", "snail-normal",
                                        "ground", "menu-bg", "sky-bg",
                                        "slingshot" };
 

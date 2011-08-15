@@ -7,11 +7,14 @@ var imageRect = null;
 var selectionColor = "rgba(180, 40, 40, 0.5)";
 var borderColor = "rgba(160, 20, 20, 0.65)";
 var keyState = null;
+var history = [];
 
 function initEditor() {
     canvas = document.getElementById("leveleditor");
     ctx = canvas.getContext("2d");
     level = JSON.parse(document.levelJSON.levelJSONtext.value);
+    
+    //updateHistory();
     
     textures = { block: new Image(), slingshot: new Image(), bg: new Image(),
                  ground: new Image(), snail: new Image() };
@@ -25,6 +28,15 @@ function initEditor() {
     canvas.onmousedown = function (e) { onMouseDown(level, e); };
     canvas.onmouseup = onMouseUp;
 }
+
+//function updateHistory() {
+    //if (history.indexOf(level) > -1)
+        //history = history.slice(0, history.indexOf(level));
+    //level = clone(level);
+    //history.push(level);
+//}
+
+//function rewindHistory
 
 function boxesIntersect(b0, b1) {
     if (b0.y + b0.h <= b1.y || b0.y >= b1.y + b1.h)
@@ -120,6 +132,7 @@ function onMouseDown(level, e) {
         pos = { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop };
         canvas.onmousemove = function (e) { beginSelection(pos, e); };
         canvas.onmouseup = function (e) { endSelection(pos, e); };
+        canvas.onmouseout = canvas.onmouseup;
         return;
     }
     if (e.ctrlKey)

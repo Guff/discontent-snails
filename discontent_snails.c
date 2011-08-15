@@ -16,7 +16,7 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 #define PHYSICS_STEP    (1 / 250.0)
-#define RECT_MASS       1
+#define RECT_MASS       2
 #define WIDTH           640
 #define HEIGHT          480
 
@@ -104,7 +104,7 @@ void destroyable_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data
     if (!body || body->type != BODY_TYPE_OBSTACLE || body->type != BODY_TYPE_ENEMY)
         body = cpShapeGetUserData(b);
     cpVect impulse = cpArbiterTotalImpulseWithFriction(arb);
-    body->damage += MAX(cpvlength(impulse) - 150, 0) / 200;
+    body->damage += MAX(cpvlength(impulse) - 250, 0) / 200;
     
     if (body->damage >= 1) {
         cpSpaceAddPostStepCallback(space, destroyable_collision_post_step, arb,
@@ -174,10 +174,10 @@ void init_bodies(level_t *level) {
                              cpv(-13, 1), cpv(-9, 10) };
     int snail_verts_n = sizeof(snail_verts) / sizeof(cpVect);
     
-    cpFloat moment = cpMomentForPoly(RECT_MASS, snail_verts_n, snail_verts,
+    cpFloat moment = cpMomentForPoly(1, snail_verts_n, snail_verts,
                                      cpv(0, 0));
     
-    snail->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
+    snail->body = cpSpaceAddBody(space, cpBodyNew(1, moment));
     
     cpBodySetPos(snail->body, cpv(70, 435));
     snail->shape = cpPolyShapeNew(snail->body, 
@@ -254,11 +254,11 @@ void init_bodies(level_t *level) {
     }
     
     for (uint32_t i = 0; i < level->enemies->len; i++) {
-        moment = cpMomentForBox(RECT_MASS, 50, 50);
+        moment = cpMomentForBox(1.5, 50, 50);
         enemy_t *enemy = ptr_array_index(level->enemies, i);
         body_t *body = body_new();
         body->type = BODY_TYPE_ENEMY;
-        body->body = cpSpaceAddBody(space, cpBodyNew(RECT_MASS, moment));
+        body->body = cpSpaceAddBody(space, cpBodyNew(1.5, moment));
         cpBodySetPos(body->body, cpv(enemy->x, enemy->y));
         
         body->shape = cpBoxShapeNew(body->body, 50, 50);

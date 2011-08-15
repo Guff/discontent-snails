@@ -4,50 +4,146 @@
     "obstacles": [
         {
             "type": "block",
-            "x": 225,
+            "x": 495,
             "y": 345,
             "angle": 0
         },
         {
             "type": "block",
-            "x": 388,
+            "x": 496,
             "y": 419,
             "angle": 90
         },
         {
             "type": "block",
-            "x": 408,
+            "x": 474,
             "y": 370,
             "angle": 90
         },
         {
             "type": "block",
-            "x": 446,
+            "x": 476,
             "y": 395,
             "angle": 0
         },
         {
             "type": "block",
-            "x": 407,
+            "x": 517,
             "y": 395,
             "angle": 0
         },
         {
             "type": "block",
-            "x": 425,
+            "x": 535,
             "y": 420,
             "angle": 90
         },
         {
             "type": "block",
-            "x": 442,
+            "x": 434,
             "y": 370,
             "angle": 90
         },
         {
             "type": "block",
-            "x": 465,
+            "x": 440,
+            "y": 270,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 476,
+            "y": 295,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 378,
+            "y": 419,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 398,
+            "y": 370,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 436,
+            "y": 395,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 397,
+            "y": 395,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 415,
             "y": 420,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 512,
+            "y": 370,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 455,
+            "y": 420,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 455,
+            "y": 345,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 415,
+            "y": 345,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 457,
+            "y": 245,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 475,
+            "y": 270,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 493,
+            "y": 320,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 420,
+            "y": 320,
+            "angle": 90
+        },
+        {
+            "type": "block",
+            "x": 437,
+            "y": 295,
+            "angle": 0
+        },
+        {
+            "type": "block",
+            "x": 457,
+            "y": 320,
             "angle": 90
         }
     ],
@@ -60,8 +156,8 @@
         },
         {
             "type": "normal",
-            "x": 297,
-            "y": 412,
+            "x": 306,
+            "y": 413,
             "angle": 0
         }
     ],

@@ -35,7 +35,7 @@ ptr_array_t* level_data_query(const char *path) {
         if (!json_is_string(name_obj)) {
             fprintf(stderr, "\"name\" is not a string\n");
             parse_error = true;
-            goto name_lbl;
+            goto root_lbl;
         }
         
         level->name = strdup(json_string_value(name_obj));
@@ -44,14 +44,10 @@ ptr_array_t* level_data_query(const char *path) {
         if (!json_is_integer(num_obj)) {
             fprintf(stderr, "\"name\" is not an integer\n");
             parse_error = true;
-            goto num_lbl;
+            goto root_lbl;
         }
         
         level->num = json_integer_value(num_obj);
-num_lbl:
-        json_decref(num_obj);
-name_lbl:
-        json_decref(name_obj);
 root_lbl:
         json_decref(root);
         
@@ -95,7 +91,7 @@ level_t* level_parse(const char *filename) {
     if (!json_is_array(obstacles)) {
         fprintf(stderr, "\"obstacles\" is not an array\n");
         parse_error = true;
-        goto obstacles_lbl;
+        goto root_lbl;
     }
     
     for (size_t i = 0; i < json_array_size(obstacles); i++) {
@@ -104,7 +100,7 @@ level_t* level_parse(const char *filename) {
         if (!json_is_object(obstacle_obj)) {
             fprintf(stderr, "obstacle is not an object\n");
             parse_error = true;
-            goto obstacle_lbl;
+            goto root_lbl;
         }
         
         json_t *type_obj, *x_obj, *y_obj, *angle_obj;
@@ -116,7 +112,7 @@ level_t* level_parse(const char *filename) {
         if (!json_is_string(type_obj)) {
             fprintf(stderr, "\"type\" is not a string\n");
             parse_error = true;
-            goto obs_type_lbl;
+            goto root_lbl;
         }
         
         type_str = json_string_value(type_obj);
@@ -126,14 +122,14 @@ level_t* level_parse(const char *filename) {
         } else {
             fprintf(stderr, "\"type\" not a valid obstacle type\n");
             parse_error = true;
-            goto obs_type_lbl;
+            goto root_lbl;
         }
         
         x_obj = json_object_get(obstacle_obj, "x");
         if (!json_is_number(x_obj)) {
             fprintf(stderr, "\"x\" is not a number\n");
             parse_error = true;
-            goto obs_x_lbl;
+            goto root_lbl;
         }
 
         x = json_number_value(x_obj);
@@ -142,7 +138,7 @@ level_t* level_parse(const char *filename) {
         if (!json_is_number(y_obj)) {
             fprintf(stderr, "\"y\" is not a number\n");
             parse_error = true;
-            goto obs_y_lbl;
+            goto root_lbl;
         }
         
         y = json_number_value(y_obj);
@@ -151,7 +147,7 @@ level_t* level_parse(const char *filename) {
         if (!json_is_number(angle_obj)) {
             fprintf(stderr, "\"angle\" is not a number\n");
             parse_error = true;
-            goto obs_angle_lbl;
+            goto root_lbl;
         }
         
         angle = json_number_value(angle_obj);
@@ -163,31 +159,20 @@ level_t* level_parse(const char *filename) {
         obstacle->angle = angle;
         
         ptr_array_add(level->obstacles, obstacle);
-        
-obs_angle_lbl:
-        json_decref(angle_obj);
-obs_y_lbl:
-        json_decref(y_obj);
-obs_x_lbl:
-        json_decref(x_obj);
-obs_type_lbl:
-        json_decref(type_obj);
-obstacle_lbl:
-        json_decref(obstacle_obj);
     }
     
     json_t *slingshot = json_object_get(root, "slingshot");
     if (!json_is_object(slingshot)) {
         fprintf(stderr, "\"slingshot\" is not an object\n");
         parse_error = true;
-        goto slingshot_lbl;
+        goto root_lbl;
     }
     
     json_t *slingshot_x = json_object_get(slingshot, "x");
     if (!json_is_number(slingshot_x)) {
         fprintf(stderr, "\"x\" is not a number\n");
         parse_error = true;
-        goto slingshot_x_lbl;
+        goto root_lbl;
     }
     
     level->slingshot.x = json_number_value(slingshot_x);
@@ -196,7 +181,7 @@ obstacle_lbl:
     if (!json_is_number(slingshot_y)) {
         fprintf(stderr, "\"y\" is not a number\n");
         parse_error = true;
-        goto slingshot_y_lbl;
+        goto root_lbl;
     }
     
     level->slingshot.y = json_number_value(slingshot_y);
@@ -205,7 +190,7 @@ obstacle_lbl:
     if (!json_is_array(enemies)) {
         fprintf(stderr, "\"enemies\" is not an array\n");
         parse_error = true;
-        goto enemies_lbl;
+        goto root_lbl;
     }
     
     for (size_t i = 0; i < json_array_size(enemies); i++) {
@@ -214,7 +199,7 @@ obstacle_lbl:
         if (!json_is_object(enemy_obj)) {
             fprintf(stderr, "enemy is not an object\n");
             parse_error = true;
-            goto enemy_lbl;
+            goto root_lbl;
         }
         
         json_t *type_obj, *x_obj, *y_obj;
@@ -226,7 +211,7 @@ obstacle_lbl:
         if (!json_is_string(type_obj)) {
             fprintf(stderr, "\"type\" is not a string\n");
             parse_error = true;
-            goto enemy_type_lbl;
+            goto root_lbl;
         }
         
         type_str = json_string_value(type_obj);
@@ -236,14 +221,14 @@ obstacle_lbl:
         } else {
             fprintf(stderr, "\"type\" not a valid enemy type\n");
             parse_error = true;
-            goto enemy_type_lbl;
+            goto root_lbl;
         }
         
         x_obj = json_object_get(enemy_obj, "x");
         if (!json_is_number(x_obj)) {
             fprintf(stderr, "\"x\" is not a number\n");
             parse_error = true;
-            goto enemy_x_lbl;
+            goto root_lbl;
         }
 
         x = json_number_value(x_obj);
@@ -252,7 +237,7 @@ obstacle_lbl:
         if (!json_is_number(y_obj)) {
             fprintf(stderr, "\"y\" is not a number\n");
             parse_error = true;
-            goto enemy_y_lbl;
+            goto root_lbl;
         }
         
         y = json_number_value(y_obj);
@@ -263,30 +248,10 @@ obstacle_lbl:
         enemy->y     = y;
         
         ptr_array_add(level->enemies, enemy);
-        
-enemy_y_lbl:
-        json_decref(y_obj);
-enemy_x_lbl:
-        json_decref(x_obj);
-enemy_type_lbl:
-        json_decref(type_obj);
-enemy_lbl:
-        json_decref(enemy_obj);
     }
 
-enemies_lbl:
-    json_decref(enemies);
-slingshot_y_lbl:
-    json_decref(slingshot_y);
-slingshot_x_lbl:
-    json_decref(slingshot_x);
-slingshot_lbl:
-    json_decref(slingshot);
-obstacles_lbl:
-    json_decref(obstacles);
 root_lbl:
     json_decref(root);
-
     if (parse_error) {
         level_free(level);
         level = NULL;

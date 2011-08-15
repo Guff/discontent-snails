@@ -4,8 +4,8 @@ var textures;
 var level;
 var selection = [];
 var imageRect = null;
-var selectionColor = "rgba(180, 40, 40, 0.5)";
-var borderColor = "rgba(160, 20, 20, 0.65)";
+var selectionColor = "rgba(180, 40, 40, 0.4)";
+var borderColor = "rgba(160, 20, 20, 0.525)";
 var keyState = null;
 var history = [];
 
@@ -55,8 +55,8 @@ function getBoundingBoxes(level) {
                          w: 14, h: 40 };
     for (var i = 0; i < level.obstacles.length; i++) {
         obstacle = level.obstacles[i];
-        var cos =  Math.cos(obstacle.angle / 180 * Math.PI);
-        var sin = Math.sin(obstacle.angle / 180 * Math.PI);
+        var cos = Math.cos(deg2rad(obstacle.angle));
+        var sin = Math.sin(deg2rad(obstacle.angle));
         var w = cos * 50 + sin * 10;
         var h = sin * 50 + cos * 10;
         boundingBoxes.push({ type: "obstacle", body: obstacle,
@@ -65,8 +65,8 @@ function getBoundingBoxes(level) {
     }
     for (var i = 0; i < level.enemies.length; i++) {
         enemy = level.enemies[i];
-        var cos =  Math.cos(obstacle.angle / 180 * Math.PI);
-        var sin = Math.sin(obstacle.angle / 180 * Math.PI);
+        var cos =  Math.cos(deg2rad(enemy.angle));
+        var sin = Math.sin(deg2rad(enemy.angle));
         var w = cos * 30 + sin * 30;
         var h = sin * 30 + cos * 30
         boundingBoxes.push({ type: "enemy", body: enemy, x: enemy.x - w / 2,
@@ -280,6 +280,11 @@ function bodyInSelection(body) {
     return false;
 }
 
+function updateLevel() {
+    level = JSON.parse(document.levelJSON.levelJSONtext.value);
+    drawLevel(ctx, level);
+}
+
 function drawLevel(ctx, level) {
     document.levelJSON.levelJSONtext.value = JSON.stringify(level, null, 4);
     ctx.drawImage(textures.bg, 0, 0);
@@ -287,6 +292,37 @@ function drawLevel(ctx, level) {
     drawSlingshot(ctx, level.slingshot);
     level.obstacles.forEach(function (body) { drawBody(ctx, body); });
     level.enemies.forEach(function (enemy) { drawEnemy(ctx, enemy); });
+    drawSelection();
+}
+
+function drawSelection() {
+    ctx.beginPath();
+    for (var i = 0; i < selection.length; i++) {
+        ctx.save();
+        ctx.translate(selection[i].body.x, selection[i].body.y);
+        switch (selection[i].type) {
+            case "slingshot":
+                ctx.rect(-7, -40, 13, 40);
+                break;
+            case "enemy":
+                ctx.rotate(deg2rad(selection[i].body.angle));
+                ctx.rect(-15, -15, 30, 30);
+                break;
+            case "obstacle":
+                ctx.rotate(deg2rad(selection[i].body.angle));
+                ctx.rect(-25, -5, 50, 10);
+                break;
+            default:
+                break;
+        }
+        ctx.restore();
+    }
+    
+    ctx.fillStyle = selectionColor;
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
 }
 
 function drawSlingshot(ctx, slingshot) {
@@ -294,48 +330,29 @@ function drawSlingshot(ctx, slingshot) {
     ctx.translate(slingshot.x, slingshot.y);
     ctx.scale(1 / 3, 1 / 3);
     ctx.drawImage(textures.slingshot, -20, -120);
-    if (bodyInSelection(slingshot)) {
-        ctx.fillStyle = selectionColor;
-        ctx.fillRect(-20, -120, 40, 120);
-        ctx.strokeStyle = borderColor;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-20, -120, 40, 120);
-    }
     ctx.restore();
 }
 
 function drawEnemy(ctx, enemy) {
-    var angle = enemy.angle / 180 * Math.PI;
     ctx.save();
     ctx.translate(enemy.x, enemy.y);
-    ctx.rotate(angle);
+    ctx.rotate(deg2rad(enemy.angle));
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(-15, -15, 30, 30);
-    if (bodyInSelection(enemy)) {
-        ctx.fillStyle = selectionColor;
-        ctx.fillRect(-15, -15, 30, 30);
-        ctx.strokeStyle = borderColor;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-15, -15, 30, 30);
-    }
     ctx.restore();
 }
 
 function drawBody(ctx, body) {
-    var angle = body.angle / 180 * Math.PI;
     ctx.save();
     ctx.translate(body.x, body.y);
-    ctx.rotate(angle);
+    ctx.rotate(deg2rad(body.angle));
     ctx.scale(0.25, 0.25);
     ctx.drawImage(textures.block, -100, -20);
-    if (bodyInSelection(body)) {
-        ctx.fillStyle = selectionColor;
-        ctx.fillRect(-100, -20, textures.block.width, textures.block.height);
-        ctx.strokeStyle = borderColor;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-100, -20, textures.block.width, textures.block.height);
-    }
     ctx.restore();
+}
+
+function deg2rad(ang) {
+    return ang / 180 * Math.PI;
 }
 
 function clone(obj) {

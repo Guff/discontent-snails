@@ -113,10 +113,12 @@ function onMouseMove(body, pos, e) {
     drawLevel(ctx, level);
 }
 
+var ev;
 function onMouseDown(level, e) {
     var body, pos;
     var boundingBoxes = getBoundingBoxes(level);
     
+    ev = e;
     keyState = null;
     
     for (i = 0; i < boundingBoxes.length; i++) {
@@ -144,8 +146,6 @@ function onMouseDown(level, e) {
             selection.push(body);
     } else
         selection = [body];
-    
-    console.log(selection);
     
     drawLevel(ctx, level);
     

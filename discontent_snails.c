@@ -46,7 +46,7 @@ enum {
 
 cpSpace *space;
 cpConstraint *spring;
-cpFloat zoom;
+cpFloat zoom, pan_x;
 ALLEGRO_BITMAP *scene;
 body_t *snail, *slingshot, *ground;
 table_t *textures;
@@ -164,7 +164,6 @@ void init_world(level_t *level) {
 }
 
 void init_bodies(level_t *level) {
-    
     snail = body_new();
     obstacles = ptr_array_new();
     enemies = ptr_array_new();
@@ -281,6 +280,10 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
     al_set_target_bitmap(scene);
     al_draw_bitmap(table_lookup(textures, "sky-bg"), 0, 0, 0);
     
+    ALLEGRO_TRANSFORM trans;
+    al_identity_transform(&trans);
+    al_translate_transform(&trans, 0, 1440 - HEIGHT);
+    al_use_transform(&trans);
     
     al_draw_bitmap(ground->bitmap, 0, HEIGHT - 50, 0);
     
@@ -309,14 +312,12 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
     }
     
     al_set_target_backbuffer(display);
+    al_identity_transform(&trans);
+    al_translate_transform(&trans, -pan_x, HEIGHT * zoom - 1440);
+    al_scale_transform(&trans, 1 / zoom, 1 / zoom);
+    al_use_transform(&trans);
     al_clear_to_color(al_map_rgb(0, 0, 0));
-    al_draw_scaled_bitmap(scene, 0, 0,
-                          zoom * al_get_display_width(display),
-                          zoom * al_get_display_height(display),
-                          0, 0,
-                          al_get_display_width(display),
-                          al_get_display_height(display),
-                          0);
+    al_draw_bitmap(scene, 0, 0, 0);
     
     al_flip_display();
 }
@@ -327,6 +328,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     bool running = true;
     bool pressed = false;
     zoom = 1;
+    pan_x = 0;
     ALLEGRO_EVENT ev;
     
     init_world(level);
@@ -342,7 +344,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     al_start_timer(phys_timer);
     
     scene = al_create_bitmap(al_get_display_width(display) * 3,
-                             al_get_display_height(display));
+                             al_get_display_height(display) * 3);
     
     al_set_system_mouse_cursor(display, ALLEGRO_SYSTEM_MOUSE_CURSOR_MOVE);
     
@@ -375,6 +377,10 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
                     case ALLEGRO_KEY_RIGHT:
                         cpBodyApplyImpulse(snail->body, cpv(75, 0), cpv(0, -10));
                         break;
+                    case ALLEGRO_KEY_1:
+                        zoom = 1;
+                        pan_x = 1;
+                        break;
                     default:
                         break;
                 }
@@ -392,7 +398,9 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
                 break;
             case ALLEGRO_EVENT_MOUSE_AXES:
                 if (ev.mouse.dz)
-                    zoom = MAX(MIN(4, zoom + ev.mouse.dz / 5.0), 0.25);
+                    zoom = MAX(MIN(3, zoom - ev.mouse.dz / 5.0), 1.0 / 3.0);
+                if (ev.mouse.dw)
+                    pan_x += ev.mouse.dw * 10;
                 if (pressed)
                     cpBodySetPos(snail->body, cpv(ev.mouse.x, ev.mouse.y));
                 break;
@@ -423,7 +431,9 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     al_destroy_bitmap(scene);
     
     cpSpaceFree(space);
-    
+    ALLEGRO_TRANSFORM trans;
+    al_identity_transform(&trans);
+    al_use_transform(&trans);
     al_set_system_mouse_cursor(display, ALLEGRO_SYSTEM_MOUSE_CURSOR_DEFAULT);
 }
 

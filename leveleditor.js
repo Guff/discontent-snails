@@ -57,18 +57,18 @@ function getBoundingBoxes(level) {
         obstacle = level.obstacles[i];
         var cos =  Math.cos(obstacle.angle / 180 * Math.PI);
         var sin = Math.sin(obstacle.angle / 180 * Math.PI);
-        var w = cos * 40 + sin * 10;
-        var h = sin * 40 + cos * 10;
+        var w = cos * 50 + sin * 10;
+        var h = sin * 50 + cos * 10;
         boundingBoxes.push({ type: "obstacle", body: obstacle,
                              x: obstacle.x - w / 2, y: obstacle.y - h / 2,
-                             w: w, h: h });
+                             w: Math.abs(w), h: Math.abs(h) });
     }
     for (var i = 0; i < level.enemies.length; i++) {
         enemy = level.enemies[i];
         var cos =  Math.cos(obstacle.angle / 180 * Math.PI);
         var sin = Math.sin(obstacle.angle / 180 * Math.PI);
-        var w = cos * 50 + sin * 50;
-        var h = sin * 50 + cos * 50;
+        var w = cos * 30 + sin * 30;
+        var h = sin * 30 + cos * 30
         boundingBoxes.push({ type: "enemy", body: enemy, x: enemy.x - w / 2,
                              y: enemy.y - h / 2,
                              w: w, h: h });
@@ -104,8 +104,8 @@ function onMouseMove(body, pos, e) {
             //body.body.y += pos.y - h / 2;
             break;
         case "enemy":
-            body.body.x += pos.x - body.w + 25;
-            body.body.y += pos.y - body.h + 25;
+            body.body.x += pos.x - body.w + 15;
+            body.body.y += pos.y - body.h + 15;
             break;
         default:
             break;
@@ -144,7 +144,9 @@ function onMouseDown(level, e) {
             selection.push(body);
     } else
         selection = [body];
-        
+    
+    console.log(selection);
+    
     drawLevel(ctx, level);
     
     canvas.onmousemove = function (e) { onMouseMove(body, pos, e); };
@@ -155,7 +157,6 @@ function onMouseUp(e) {
     canvas.onmousemove = null;
 }
 
-var ev;
 function onKeyDown(e) {
     switch(keyState) {
         case null:
@@ -248,6 +249,7 @@ function endSelection(pos, e) {
     drawLevel(ctx, level);
     imageRect = null;
     canvas.onmousemove = null;
+    canvas.onmouseout = null;
 }
 
 function deleteSelected(body) {
@@ -267,7 +269,7 @@ function duplicateSelected(body) {
         else if (body.type == "enemy")
             level.enemies.push(clone(body.body));
     }
-    selection = [];
+    //selection = [];
 }
 
 function bodyInSelection(body) {
@@ -308,13 +310,13 @@ function drawEnemy(ctx, enemy) {
     ctx.translate(enemy.x, enemy.y);
     ctx.rotate(angle);
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(-25, -25, 50, 50);
+    ctx.fillRect(-15, -15, 30, 30);
     if (bodyInSelection(enemy)) {
         ctx.fillStyle = selectionColor;
-        ctx.fillRect(-25, -25, 50, 50);
+        ctx.fillRect(-15, -15, 30, 30);
         ctx.strokeStyle = borderColor;
         ctx.lineWidth = 2;
-        ctx.strokeRect(-25, -25, 50, 50);
+        ctx.strokeRect(-15, -15, 30, 30);
     }
     ctx.restore();
 }
@@ -324,14 +326,14 @@ function drawBody(ctx, body) {
     ctx.save();
     ctx.translate(body.x, body.y);
     ctx.rotate(angle);
-    ctx.scale(0.4, 0.4);
-    ctx.drawImage(textures.block, -50, -12.5);
+    ctx.scale(0.25, 0.25);
+    ctx.drawImage(textures.block, -100, -20);
     if (bodyInSelection(body)) {
         ctx.fillStyle = selectionColor;
-        ctx.fillRect(-50, -12.5, textures.block.width, textures.block.height);
+        ctx.fillRect(-100, -20, textures.block.width, textures.block.height);
         ctx.strokeStyle = borderColor;
         ctx.lineWidth = 2;
-        ctx.strokeRect(-50, -12.5, textures.block.width, textures.block.height);
+        ctx.strokeRect(-100, -20, textures.block.width, textures.block.height);
     }
     ctx.restore();
 }

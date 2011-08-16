@@ -76,6 +76,21 @@ function getBoundingBoxes(level) {
     return boundingBoxes;
 }
 
+function getBodyIndex(body) {
+    for (var i = 0; i < selection.length; i++) {
+        var matches = true;
+        for (k in selection[i]) {
+            if (body[k] != selection[i][k]) {
+                matches = false;
+                break;
+            }
+        }
+        if (matches)
+            return i;
+    }
+    return -1;
+}
+
 function mouseOverBody(body, e) {
     var x = e.pageX - canvas.offsetLeft;
     var y = e.pageY - canvas.offsetTop;
@@ -113,12 +128,10 @@ function onMouseMove(body, pos, e) {
     drawLevel(ctx, level);
 }
 
-var ev;
 function onMouseDown(level, e) {
     var body, pos;
     var boundingBoxes = getBoundingBoxes(level);
     
-    ev = e;
     keyState = null;
     
     for (i = 0; i < boundingBoxes.length; i++) {
@@ -137,11 +150,14 @@ function onMouseDown(level, e) {
         canvas.onmouseout = canvas.onmouseup;
         return;
     }
-    if (e.ctrlKey)
-        selection.push(body);
-    else if (e.shiftKey) {
-        if (selection.indexOf(body) != -1)
-            selection.pop(selection.indexOf(body));
+    if (e.ctrlKey) {
+        if (getBodyIndex(body) != -1)
+            selection.splice(getBodyIndex(body), 1);
+        else
+            selection.push(body);
+    } else if (e.shiftKey) {
+        if (getBodyIndex(body) != -1)
+            selection.splice(getBodyIndex(body), 1);
         else
             selection.push(body);
     } else
@@ -168,6 +184,8 @@ function onKeyDown(e) {
                 case 82: // r
                     keyState = "rot";
                     break;
+                case 84: // t
+                    keyState = "terrain";
                 case 46: // delete
                     selection.forEach(deleteSelected);
                     drawLevel(ctx, level);
@@ -197,7 +215,7 @@ function onKeyDown(e) {
                     drawLevel(ctx, level);
                     break;
                 default:
-                    //console.log(e.keyCode);
+                    console.log(e.keyCode);
                     break;
             }
             break;
@@ -272,14 +290,6 @@ function duplicateSelected(body) {
     //selection = [];
 }
 
-function bodyInSelection(body) {
-    for (var i = 0; i < selection.length; i++) {
-        if (body == selection[i].body)
-            return true;
-    }
-    return false;
-}
-
 function updateLevel() {
     level = JSON.parse(document.levelJSON.levelJSONtext.value);
     drawLevel(ctx, level);
@@ -289,6 +299,7 @@ function drawLevel(ctx, level) {
     document.levelJSON.levelJSONtext.value = JSON.stringify(level, null, 4);
     ctx.drawImage(textures.bg, 0, 0);
     ctx.drawImage(textures.ground, 0, 430);
+    drawTerrain(ctx, level.terrain);
     drawSlingshot(ctx, level.slingshot);
     level.obstacles.forEach(function (body) { drawBody(ctx, body); });
     level.enemies.forEach(function (enemy) { drawEnemy(ctx, enemy); });

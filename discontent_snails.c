@@ -348,6 +348,15 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     
     al_set_system_mouse_cursor(display, ALLEGRO_SYSTEM_MOUSE_CURSOR_MOVE);
     
+    cpBody *mouse_body = cpBodyNewStatic();
+    //cpSpaceAddBody(space, mouse_body);
+    cpVect pos = cpBodyGetPos(snail->body);
+    cpBodySetPos(mouse_body, cpv(pos.x - 25, pos.y - 10));
+    cpConstraint *mouse_spring = cpDampedSpringNew(mouse_body, snail->body,
+                                                   cpv(0, 0), cpv(0, 0),
+                                                   100, 25, 0);
+    cpSpaceAddConstraint(space, mouse_spring);
+    
     while (running) {
         al_wait_for_event(event_queue, &ev);
         switch (ev.type) {
@@ -395,14 +404,20 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
                 break;
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
                 pressed = false;
+                if (mouse_spring) {
+                    cpSpaceRemoveConstraint(space, mouse_spring);
+                    mouse_spring = NULL;
+                }
                 break;
             case ALLEGRO_EVENT_MOUSE_AXES:
                 if (ev.mouse.dz)
                     zoom = MAX(MIN(3, zoom - ev.mouse.dz / 5.0), 1.0 / 3.0);
                 if (ev.mouse.dw)
                     pan_x += ev.mouse.dw * 10;
-                if (pressed)
-                    cpBodySetPos(snail->body, cpv(ev.mouse.x, ev.mouse.y));
+                if (pressed) {
+                    cpBodySetPos(mouse_body, cpv(ev.mouse.x, ev.mouse.y));
+                    printf("%f\n", cpBodyGetPos(mouse_body).x);
+                }
                 break;
             default:
                 break;

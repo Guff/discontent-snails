@@ -32,6 +32,7 @@ function initEditor() {
     canvas.addEventListener("mousedown", function (e) { onMouseDown(level, e); }, true);
     canvas.addEventListener("mouseup", onMouseUp, false);
     canvas.addEventListener("DOMMouseScroll", onScroll, true);
+    canvas.addEventListener("mousewheel", onScroll, true);
 }
 
 //function updateHistory() {
@@ -101,17 +102,33 @@ function getBodyIndex(body) {
     return -1;
 }
 
+var ev;
 function onScroll(e) {
-    if (e.axis == 1) {
+    ev = e;
+    var dx = e.detail || -e.wheelDeltaX / 120;
+    var dy = e.detail || -e.wheelDeltaY / 120;
+    var axis;
+    if (e.axis)
+        axis = e.axis;
+    else {
+        if (dx)
+            axis = 1;
+        else
+            axis = 2;
+    }
+    
+    console.log("hullo");
+    if (axis == 1) {
         if (e.shiftKey)
-            viewport.y += e.detail * 5;
+            viewport.y += dy * 5;
         else
-            viewport.x = Math.max(viewport.x + e.detail * 5, 0);
-    } else if (e.axis == 2)
+            viewport.x = Math.max(viewport.x + dx * 5, 0);
+    } else if (axis == 2) {
         if (e.ctrlKey)
-            viewport.zoom = Math.max(Math.min(viewport.zoom - e.detail / 20, 3), 1 / 3);
+            viewport.zoom = Math.max(Math.min(viewport.zoom - dy / 20, 3), 1 / 3);
         else
-            viewport.y -= e.detail * 5;
+            viewport.y -= dy * 5;
+    }
     
     drawLevel(ctx, level);
     

@@ -8,6 +8,8 @@ var selectionColor = "rgba(180, 40, 40, 0.4)";
 var borderColor = "rgba(160, 20, 20, 0.525)";
 var keyState = null;
 var history = [];
+var stonePattern;
+var viewport = { x: 0, y: 0, zoom: 1 };
 
 function initEditor() {
     canvas = document.getElementById("leveleditor");
@@ -18,15 +20,18 @@ function initEditor() {
     
     textures = { block: new Image(), slingshot: new Image(), bg: new Image(),
                  ground: new Image(), snail: new Image() };
-    textures.block = document.getElementById("block");
+    textures.block =     document.getElementById("block");
     textures.slingshot = document.getElementById("slingshot");
-    textures.bg = document.getElementById("bg");
-    textures.ground = document.getElementById("ground");
-    textures.snail = document.getElementById("snail");
+    textures.bg =        document.getElementById("bg");
+    textures.ground =    document.getElementById("ground");
+    textures.snail =     document.getElementById("snail");
+    textures.stone =     document.getElementById("stone");
+    stonePattern = ctx.createPattern(textures.stone, "repeat");
     drawLevel(ctx, level);
-    window.onkeydown = onKeyDown;
-    canvas.onmousedown = function (e) { onMouseDown(level, e); };
-    canvas.onmouseup = onMouseUp;
+    document.addEventListener("keydown", onKeyDown, false);
+    canvas.addEventListener("mousedown", function (e) { onMouseDown(level, e); }, false);
+    canvas.addEventListener("mouseup", onMouseUp, false);
+    canvas.addEventListener("DOMMouseScroll", onScroll, false);
 }
 
 //function updateHistory() {
@@ -48,11 +53,14 @@ function boxesIntersect(b0, b1) {
 }
 
 function getBoundingBoxes(level) {
+    var s = viewport.zoom;
+    var dx = viewport.x, dy = viewport.y;
     boundingBoxes = new Array();
     
     boundingBoxes[0] = { type: "slingshot", body: level.slingshot,
-                         x: level.slingshot.x - 7, y: level.slingshot.y - 40,
-                         w: 14, h: 40 };
+                         x: s * (level.slingshot.x + dx - 7),
+                         y: s * (level.slingshot.y + dy - 40),
+                         w: s * 14, h: s * 40 };
     for (var i = 0; i < level.obstacles.length; i++) {
         obstacle = level.obstacles[i];
         var cos = Math.cos(deg2rad(obstacle.angle));
@@ -60,8 +68,9 @@ function getBoundingBoxes(level) {
         var w = cos * 50 + sin * 10;
         var h = sin * 50 + cos * 10;
         boundingBoxes.push({ type: "obstacle", body: obstacle,
-                             x: obstacle.x - w / 2, y: obstacle.y - h / 2,
-                             w: Math.abs(w), h: Math.abs(h) });
+                             x: s *(obstacle.x + dx - w / 2),
+                             y: s * (obstacle.y + dy - h / 2),
+                             w: s * Math.abs(w), h: s * Math.abs(h) });
     }
     for (var i = 0; i < level.enemies.length; i++) {
         enemy = level.enemies[i];
@@ -69,9 +78,10 @@ function getBoundingBoxes(level) {
         var sin = Math.sin(deg2rad(enemy.angle));
         var w = cos * 30 + sin * 30;
         var h = sin * 30 + cos * 30
-        boundingBoxes.push({ type: "enemy", body: enemy, x: enemy.x - w / 2,
-                             y: enemy.y - h / 2,
-                             w: w, h: h });
+        boundingBoxes.push({ type: "enemy", body: enemy,
+                             x: s * (enemy.x + dx - w / 2),
+                             y: s * (enemy.y + dy - h / 2),
+                             w: s * w, h: s * h });
     }
     return boundingBoxes;
 }
@@ -89,6 +99,18 @@ function getBodyIndex(body) {
             return i;
     }
     return -1;
+}
+
+function onScroll(e) {
+    if (e.axis == 1) {
+        if (e.shiftKey)
+            viewport.y += e.detail * 5;
+        else
+            viewport.x = Math.max(viewport.x + e.detail * 5, 0);
+    } else if (e.axis == 2)
+        viewport.zoom = Math.max(Math.min(viewport.zoom - e.detail / 10, 3), 1 / 3);
+    
+    drawLevel(ctx, level);
 }
 
 function mouseOverBody(body, e) {
@@ -174,7 +196,22 @@ function onMouseUp(e) {
 }
 
 function onKeyDown(e) {
-    switch(keyState) {
+    // global key bindings
+    switch (e.keyCode) {
+        case 49: // 1
+            viewport = { x: 0, y: 0, zoom: 1 };
+            console.log("hullo");
+            drawLevel(ctx, level);
+            break;
+        case 27: // escape
+            keyState = null;
+            break;
+        default:
+            break;
+    }
+    
+    // context-specific keybindings
+    switch (keyState) {
         case null:
             switch (e.keyCode) {
                 case 68: // d
@@ -233,11 +270,17 @@ function onKeyDown(e) {
                     });
                     drawLevel(ctx, level);
                     break;
-                case 27: // escape
-                    keyState = null;
                 default:
                     break;
             }
+        case "terrain":
+            switch (e.keyCode) {
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
     }
 }
 
@@ -297,13 +340,17 @@ function updateLevel() {
 
 function drawLevel(ctx, level) {
     document.levelJSON.levelJSONtext.value = JSON.stringify(level, null, 4);
+    ctx.save();
+    ctx.translate(-viewport.x, viewport.y);
+    ctx.scale(viewport.zoom, viewport.zoom);
     ctx.drawImage(textures.bg, 0, 0);
     ctx.drawImage(textures.ground, 0, 430);
-    drawTerrain(ctx, level.terrain);
+    drawTerrain(ctx, level.terrain, stonePattern);
     drawSlingshot(ctx, level.slingshot);
     level.obstacles.forEach(function (body) { drawBody(ctx, body); });
     level.enemies.forEach(function (enemy) { drawEnemy(ctx, enemy); });
     drawSelection();
+    ctx.restore();
 }
 
 function drawSelection() {

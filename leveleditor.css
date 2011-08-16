@@ -6,6 +6,9 @@
     float: left;
     border: none;
 }
+#levelCanvas:focus{
+    border: none;
+}
 
 #images{
     display: none;

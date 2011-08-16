@@ -4,6 +4,7 @@
 
 #levelCanvas{
     float: left;
+    border: none;
 }
 
 #images{

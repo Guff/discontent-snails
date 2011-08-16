@@ -6,7 +6,7 @@ var selection = [];
 var imageRect = null;
 var selectionColor = "rgba(180, 40, 40, 0.4)";
 var borderColor = "rgba(160, 20, 20, 0.525)";
-var keyState = null;
+var mode = null;
 var history = [];
 var stonePattern;
 var viewport = { x: 0, y: 0, zoom: 1 };
@@ -28,10 +28,10 @@ function initEditor() {
     textures.stone =     document.getElementById("stone");
     stonePattern = ctx.createPattern(textures.stone, "repeat");
     drawLevel(ctx, level);
-    document.addEventListener("keydown", onKeyDown, false);
-    canvas.addEventListener("mousedown", function (e) { onMouseDown(level, e); }, false);
+    document.addEventListener("keydown", onKeyDown, true);
+    canvas.addEventListener("mousedown", function (e) { onMouseDown(level, e); }, true);
     canvas.addEventListener("mouseup", onMouseUp, false);
-    canvas.addEventListener("DOMMouseScroll", onScroll, false);
+    canvas.addEventListener("DOMMouseScroll", onScroll, true);
 }
 
 //function updateHistory() {
@@ -108,9 +108,17 @@ function onScroll(e) {
         else
             viewport.x = Math.max(viewport.x + e.detail * 5, 0);
     } else if (e.axis == 2)
-        viewport.zoom = Math.max(Math.min(viewport.zoom - e.detail / 10, 3), 1 / 3);
+        if (e.ctrlKey)
+            viewport.zoom = Math.max(Math.min(viewport.zoom - e.detail / 20, 3), 1 / 3);
+        else
+            viewport.y -= e.detail * 5;
     
     drawLevel(ctx, level);
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    return false;
 }
 
 function mouseOverBody(body, e) {
@@ -151,44 +159,47 @@ function onMouseMove(body, pos, e) {
 }
 
 function onMouseDown(level, e) {
-    var body, pos;
-    var boundingBoxes = getBoundingBoxes(level);
-    
-    keyState = null;
-    
-    for (i = 0; i < boundingBoxes.length; i++) {
-        var ret = mouseOverBody(boundingBoxes[i], e);
-        body = ret[0];
-        pos = ret[1];
-        if (body) break;
+    switch (mode) {
+        case null:
+            var body, pos;
+            var boundingBoxes = getBoundingBoxes(level);
+            
+            for (i = 0; i < boundingBoxes.length; i++) {
+                var ret = mouseOverBody(boundingBoxes[i], e);
+                body = ret[0];
+                pos = ret[1];
+                if (body) break;
+            }
+            if (!body) {
+                if (!e.ctrlKey)
+                    selection = [];
+                drawLevel(ctx, level);
+                pos = { x: e.pageX - canvas.offsetLeft,
+                        y: e.pageY - canvas.offsetTop };
+                canvas.onmousemove = function (e) { beginSelection(pos, e); };
+                canvas.onmouseup = function (e) { endSelection(pos, e); };
+                canvas.onmouseout = canvas.onmouseup;
+                return;
+            }
+            if (e.ctrlKey) {
+                if (getBodyIndex(body) != -1)
+                    selection.splice(getBodyIndex(body), 1);
+                else
+                    selection.push(body);
+            } else if (e.shiftKey) {
+                if (getBodyIndex(body) != -1)
+                    selection.splice(getBodyIndex(body), 1);
+                else
+                    selection.push(body);
+            } else
+                selection = [body];
+            
+            drawLevel(ctx, level);
+            
+            canvas.onmousemove = function (e) { onMouseMove(body, pos, e); };
+            canvas.onmouseup = onMouseUp;
+        case "rotate":
     }
-    if (!body) {
-        if (!e.ctrlKey)
-            selection = [];
-        drawLevel(ctx, level);
-        pos = { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop };
-        canvas.onmousemove = function (e) { beginSelection(pos, e); };
-        canvas.onmouseup = function (e) { endSelection(pos, e); };
-        canvas.onmouseout = canvas.onmouseup;
-        return;
-    }
-    if (e.ctrlKey) {
-        if (getBodyIndex(body) != -1)
-            selection.splice(getBodyIndex(body), 1);
-        else
-            selection.push(body);
-    } else if (e.shiftKey) {
-        if (getBodyIndex(body) != -1)
-            selection.splice(getBodyIndex(body), 1);
-        else
-            selection.push(body);
-    } else
-        selection = [body];
-    
-    drawLevel(ctx, level);
-    
-    canvas.onmousemove = function (e) { onMouseMove(body, pos, e); };
-    canvas.onmouseup = onMouseUp;
 }
 
 function onMouseUp(e) {
@@ -196,22 +207,23 @@ function onMouseUp(e) {
 }
 
 function onKeyDown(e) {
+    if (document.activeElement != canvas)
+        return true;
     // global key bindings
     switch (e.keyCode) {
         case 49: // 1
             viewport = { x: 0, y: 0, zoom: 1 };
-            console.log("hullo");
             drawLevel(ctx, level);
             break;
         case 27: // escape
-            keyState = null;
+            mode = null;
             break;
         default:
             break;
     }
     
     // context-specific keybindings
-    switch (keyState) {
+    switch (mode) {
         case null:
             switch (e.keyCode) {
                 case 68: // d
@@ -219,10 +231,11 @@ function onKeyDown(e) {
                     drawLevel(ctx, level);
                     break;
                 case 82: // r
-                    keyState = "rot";
+                    mode = "rot";
                     break;
                 case 84: // t
-                    keyState = "terrain";
+                    mode = "terrain";
+                    break;
                 case 46: // delete
                     selection.forEach(deleteSelected);
                     drawLevel(ctx, level);
@@ -252,7 +265,7 @@ function onKeyDown(e) {
                     drawLevel(ctx, level);
                     break;
                 default:
-                    console.log(e.keyCode);
+                    //console.log(e.keyCode);
                     break;
             }
             break;
@@ -282,6 +295,11 @@ function onKeyDown(e) {
         default:
             break;
     }
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    return false;
 }
 
 function beginSelection(pos, e) {

@@ -159,6 +159,7 @@ function onMouseMove(body, pos, e) {
 }
 
 function onMouseDown(level, e) {
+    canvas.focus();
     switch (mode) {
         case null:
             var body, pos;

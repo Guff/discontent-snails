@@ -20,15 +20,15 @@ div {
 }
 
 #statusBar {
-    background-color: rgb(120, 120, 120);
+    background-color: rgb(180, 180, 180);
     width: 640px;
-    height: 12px;
+    height: 13px;
     margin-top: 0px;
 }
 
 #statusText {
     font-family: 'Anonymous Pro', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 #angleInput {

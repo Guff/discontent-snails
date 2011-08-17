@@ -1,21 +1,43 @@
-#levelText{
+div {
+    background-color: rgb(255, 255, 255);
+    margin: 0px;
+    border: none;
+}
+
+#levelText {
     float: right;
 }
 
-#levelCanvas{
+#levelCanvas {
+/*
     float: left;
+*/
     border: none;
+    margin: 2px;
     width: 640px;
     height: 480px;
+    margin-bottom: 0px;
 }
 
-#angleInput{
+#statusBar {
+    background-color: rgb(120, 120, 120);
+    width: 640px;
+    height: 12px;
+    margin-top: 0px;
+}
+
+#statusText {
+    font-family: 'Anonymous Pro', sans-serif;
+    font-size: 12px;
+}
+
+#angleInput {
     width: 100px;
     top: 320px;
     left: 240px;
     position: absolute;
 }
 
-#images{
+#images {
     display: none;
 }

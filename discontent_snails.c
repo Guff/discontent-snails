@@ -186,6 +186,9 @@ void init_world(level_t *level) {
         v[3 * i + 2].u = tri->x2 * 2;
         v[3 * i + 2].v = tri->y2 * 2;
         
+        al_draw_triangle(tri->x0 * 2, tri->y0 * 2, tri->x1 * 2, tri->y1 * 2,
+                         tri->x2 * 2, tri->y2 * 2, al_map_rgb(20, 30, 70), 4);
+        
         cpVect cp_tri[3] = { cpv(tri->x0, tri->y0), cpv(tri->x1, tri->y1),
                              cpv(tri->x2, tri->y2) };
         cpShape *tri_shape = cpPolyShapeNew(space->staticBody, 3, cp_tri,

@@ -164,7 +164,7 @@ void init_world(level_t *level) {
                           0, 13, 40, 0);
     
     terrain_bitmap = al_create_bitmap(WIDTH, HEIGHT);
-    ALLEGRO_VERTEX v[level->terrain->len * 3];
+    ALLEGRO_VERTEX v[level->terrain->len * 3 + 1];
     for (uint i = 0; i < level->terrain->len; i++) {
         triangle_t *tri = ptr_array_index(level->terrain, i);
         v[3 * i].x = tri->x0;

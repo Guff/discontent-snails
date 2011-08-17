@@ -1,6 +1,12 @@
+* {
+    padding: 0px;
+    margin: 0px;
+}
+
 div {
     background-color: rgb(255, 255, 255);
     margin: 0px;
+    padding: 0px;
     border: none;
 }
 
@@ -8,12 +14,13 @@ div {
     float: right;
 }
 
-#levelCanvas {
-/*
-    float: left;
-*/
-    border: none;
+#levelEditor {
     margin: 2px;
+}
+
+#levelCanvas {
+    border: none;
+    padding: 0px;
     width: 640px;
     height: 480px;
     margin-bottom: 0px;
@@ -22,8 +29,6 @@ div {
 #statusBar {
     background-color: rgb(180, 180, 180);
     width: 640px;
-    height: 13px;
-    margin-top: 0px;
 }
 
 #statusText {

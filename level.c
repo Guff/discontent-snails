@@ -68,6 +68,7 @@ root_lbl:
 void level_free(level_t *level) {
     ptr_array_free(level->obstacles, true);
     ptr_array_free(level->enemies, true);
+    ptr_array_free(level->terrain, true);
     free(level);
 }
 
@@ -79,6 +80,7 @@ level_t* level_parse(const char *filename) {
     
     level->obstacles = ptr_array_new();
     level->enemies = ptr_array_new();
+    level->terrain = ptr_array_new();
     
     if (!root) {
         fprintf(stderr, "error on line %d: %s\n", error.line, error.text);
@@ -249,7 +251,81 @@ level_t* level_parse(const char *filename) {
         
         ptr_array_add(level->enemies, enemy);
     }
-
+    
+    json_t *terrain = json_object_get(root, "terrain");
+    if (!json_is_array(terrain)) {
+        fprintf(stderr, "\"terrain\" is not an array\n");
+        parse_error = true;
+        goto root_lbl;
+    }
+    
+    for (size_t i = 0; i < json_array_size(terrain); i++) {
+        json_t *tri_obj = json_array_get(terrain, i);
+        if (!json_is_object(tri_obj)) {
+            fprintf(stderr, "triangle is not an object\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        triangle_t *tri = malloc(sizeof(triangle_t));
+        
+        json_t *x_obj = json_object_get(tri_obj, "x0");
+        if (!json_is_number(x_obj)) {
+            fprintf(stderr, "x0 is not an object\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        tri->x0 = json_number_value(x_obj);
+        
+        json_t *y_obj = json_object_get(tri_obj, "y0");
+        if (!json_is_number(y_obj)) {
+            fprintf(stderr, "y0 is not an object\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        tri->y0 = json_number_value(y_obj);
+        
+        x_obj = json_object_get(tri_obj, "x1");
+        if (!json_is_number(x_obj)) {
+            fprintf(stderr, "x1 is not an object\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        tri->x1 = json_number_value(x_obj);
+        
+        y_obj = json_object_get(tri_obj, "y1");
+        if (!json_is_number(y_obj)) {
+            fprintf(stderr, "y1 is not an object\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        tri->y1 = json_number_value(y_obj);
+        
+        x_obj = json_object_get(tri_obj, "x2");
+        if (!json_is_number(x_obj)) {
+            fprintf(stderr, "x2 is not an object\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        tri->x2 = json_number_value(x_obj);
+        
+        y_obj = json_object_get(tri_obj, "y2");
+        if (!json_is_number(y_obj)) {
+            fprintf(stderr, "y2 is not an object\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        tri->y2 = json_number_value(y_obj);
+        
+        ptr_array_add(level->terrain, tri);
+    }
+    
 root_lbl:
     json_decref(root);
     if (parse_error) {

@@ -5,9 +5,15 @@
 #levelCanvas{
     float: left;
     border: none;
+    width: 640px;
+    height: 480px;
 }
-#levelCanvas:focus{
-    border: none;
+
+#angleInput{
+    width: 100px;
+    top: 320px;
+    left: 240px;
+    position: absolute;
 }
 
 #images{

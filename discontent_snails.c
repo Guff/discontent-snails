@@ -48,6 +48,7 @@ cpSpace *space;
 cpConstraint *spring;
 cpFloat zoom, pan_x;
 ALLEGRO_BITMAP *scene;
+ALLEGRO_BITMAP *terrain_bitmap;
 body_t *snail, *slingshot, *ground;
 table_t *textures;
 ptr_array_t *obstacles;
@@ -161,6 +162,38 @@ void init_world(level_t *level) {
     al_set_target_bitmap(slingshot->bitmap);
     al_draw_scaled_bitmap(table_lookup(textures, "slingshot"), 0, 0, 40, 120, 0,
                           0, 13, 40, 0);
+    
+    terrain_bitmap = al_create_bitmap(WIDTH, HEIGHT);
+    ALLEGRO_VERTEX v[level->terrain->len * 3];
+    for (uint i = 0; i < level->terrain->len; i++) {
+        triangle_t *tri = ptr_array_index(level->terrain, i);
+        v[3 * i].x = tri->x0;
+        v[3 * i].y = tri->y0;
+        v[3 * i].color = al_map_rgb(255, 255, 255);
+        v[3 * i].u = tri->x0;
+        v[3 * i].v = tri->y0;
+        
+        v[3 * i + 1].x = tri->x1;
+        v[3 * i + 1].y = tri->y1;
+        v[3 * i + 1].color = al_map_rgb(255, 255, 255);
+        v[3 * i + 1].u = tri->x1;
+        v[3 * i + 1].v = tri->y1;
+        
+        v[3 * i + 2].x = tri->x2;
+        v[3 * i + 2].y = tri->y2;
+        v[3 * i + 2].color = al_map_rgb(255, 255, 255);
+        v[3 * i + 2].u = tri->x2;
+        v[3 * i + 2].v = tri->y2;
+        
+        cpVect cp_tri[3] = { cpv(tri->x0, tri->y0), cpv(tri->x1, tri->y1),
+                             cpv(tri->x2, tri->y2) };
+        cpShape *tri_shape = cpPolyShapeNew(space->staticBody, 3, cp_tri,
+                                            cpv(0, 0));
+        cpSpaceAddShape(space, tri_shape);
+    }
+    al_set_target_bitmap(terrain_bitmap);
+    al_draw_prim(v, NULL, table_lookup(textures, "stone"), 0,
+                 3 * level->terrain->len, ALLEGRO_PRIM_TRIANGLE_LIST);
 }
 
 void init_bodies(level_t *level) {
@@ -286,6 +319,7 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
     al_use_transform(&trans);
     
     al_draw_bitmap(ground->bitmap, 0, HEIGHT - 50, 0);
+    al_draw_bitmap(terrain_bitmap, 0, 0, 0);
     
     cpVect snail_pos = cpBodyGetPos(snail->body);
     cpFloat snail_ang = cpBodyGetAngle(snail->body);

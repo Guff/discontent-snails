@@ -1,6 +1,7 @@
 var canvas;
 var ctx;
 var textures;
+var angleInput;
 var level;
 var selection = [];
 var imageRect = null;
@@ -12,6 +13,7 @@ var stonePattern;
 var viewport = { x: 0, y: 0, zoom: 1 };
 
 function initEditor() {
+    angleInput = document.getElementById("angleInput");
     canvas = document.getElementById("leveleditor");
     ctx = canvas.getContext("2d");
     level = JSON.parse(document.levelJSON.levelJSONtext.value);
@@ -102,9 +104,30 @@ function getBodyIndex(body) {
     return -1;
 }
 
-var ev;
+function onAngleRelKeyPress(e) {
+    selection.forEach(function (body) {
+        body.body.angle += parseFloat(angleInput.value || 0);
+    });
+    if (e.keyCode == 13 || e.keycode == 27) {
+        angleInput.removeEventListener("keydown", onAngleRelKeyPress);
+        angleInput.hidden = true;
+    }
+    
+    drawLevel(ctx, level);
+}
+
+function onAngleAbsKeyPress(e) {
+    selection.forEach(function (body) {
+        body.body.angle = parseFloat(angleInput.value);
+    });
+    if (e.keyCode == 13 || e.keycode == 27) {
+        angleInput.removeEventListener("keydown", onAngleAbsKeyPress);
+        angleInput.hidden = true;
+    }
+    drawLevel(ctx, level);
+}
+
 function onScroll(e) {
-    ev = e;
     var dx = e.detail || -e.wheelDeltaX / 120;
     var dy = e.detail || -e.wheelDeltaY / 120;
     var axis;
@@ -117,7 +140,6 @@ function onScroll(e) {
             axis = 2;
     }
     
-    console.log("hullo");
     if (axis == 1) {
         if (e.shiftKey)
             viewport.y += dy * 5;
@@ -139,8 +161,8 @@ function onScroll(e) {
 }
 
 function mouseOverBody(body, e) {
-    var x = e.pageX - canvas.offsetLeft;
-    var y = e.pageY - canvas.offsetTop;
+    var x = e.pageX - canvas.offsetLeft + viewport.x;
+    var y = e.pageY - canvas.offsetTop + viewport.y;
     var bx0 = body.x, bx1 = body.x + body.w;
     var by0 = body.y, by1 = body.y + body.h;
     if (x >= bx0 && x <= bx1 && y >= by0 && y <= by1)
@@ -150,8 +172,8 @@ function mouseOverBody(body, e) {
 }
 
 function onMouseMove(body, pos, e) {
-    body.body.x = e.pageX - canvas.offsetLeft;
-    body.body.y = e.pageY - canvas.offsetTop;
+    body.body.x = e.pageX - canvas.offsetLeft + viewport.x;
+    body.body.y = e.pageY - canvas.offsetTop + viewport.y;
     switch (body.type) {
         case "slingshot":
             body.body.x += pos.x - 7;
@@ -192,8 +214,8 @@ function onMouseDown(level, e) {
                 if (!e.ctrlKey)
                     selection = [];
                 drawLevel(ctx, level);
-                pos = { x: e.pageX - canvas.offsetLeft,
-                        y: e.pageY - canvas.offsetTop };
+                pos = { x: e.pageX - canvas.offsetLeft + viewport.x,
+                        y: e.pageY - canvas.offsetTop + viewport.y };
                 canvas.onmousemove = function (e) { beginSelection(pos, e); };
                 canvas.onmouseup = function (e) { endSelection(pos, e); };
                 canvas.onmouseout = canvas.onmouseup;
@@ -216,7 +238,9 @@ function onMouseDown(level, e) {
             
             canvas.onmousemove = function (e) { onMouseMove(body, pos, e); };
             canvas.onmouseup = onMouseUp;
+            break;
         case "rotate":
+            break;
     }
 }
 
@@ -283,12 +307,25 @@ function onKeyDown(e) {
                     drawLevel(ctx, level);
                     break;
                 default:
-                    //console.log(e.keyCode);
+                    console.log(e.keyCode);
                     break;
             }
             break;
         case "rot":
             switch (e.keyCode) {
+                case 65: // a
+                    if (e.shiftKey)
+                        angleInput.addEventListener("keydown",
+                                                    onAngleAbsKeyPress, false);
+                    else
+                        angleInput.addEventListener("keydown",
+                                                    onAngleRelKeyPress, false);
+                    angleInput.hidden = false;
+                    angleInput.focus();
+                    break;
+                case 82: // r
+                    mode = null;
+                    break;
                 case 37: // left
                     selection.forEach(function (body) {
                         body.body.angle -= e.shiftKey ? 10 : 1;
@@ -321,7 +358,8 @@ function onKeyDown(e) {
 }
 
 function beginSelection(pos, e) {
-    var x = e.pageX - canvas.offsetLeft, y = e.pageY - canvas.offsetTop;
+    var x = e.pageX - canvas.offsetLeft + viewport.x,
+        y = e.pageY - canvas.offsetTop + viewport.y;
     drawLevel(ctx, level);
     ctx.fillStyle = selectionColor;
     ctx.fillRect(Math.min(pos.x, x), Math.min(pos.y, y), Math.abs(x - pos.x),
@@ -333,8 +371,8 @@ function beginSelection(pos, e) {
 }
 
 function endSelection(pos, e) {
-    var x = Math.min(pos.x, e.pageX - canvas.offsetLeft),
-        y = Math.min(pos.y, e.pageY - canvas.offsetTop),
+    var x = Math.min(pos.x, e.pageX - canvas.offsetLeft + viewport.x),
+        y = Math.min(pos.y, e.pageY - canvas.offsetTop + viewport.y),
         w = Math.abs(e.pageX - canvas.offsetLeft - pos.x),
         h = Math.abs(e.pageY - canvas.offsetTop - pos.y);
     var selectionBox = { x: x, y: y, w: w, h: h };

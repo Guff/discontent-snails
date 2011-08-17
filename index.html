@@ -83,20 +83,20 @@
     },
     "terrain": [
         {
-            "verts": [
-                {
-                    "x": 200,
-                    "y": 440
-                },
-                {
-                    "x": 250,
-                    "y": 400
-                },
-                {
-                    "x": 250,
-                    "y": 440
-                }
-            ]
+            "x0": 200,
+            "y0": 440,
+            "x1": 250,
+            "y1": 440,
+            "x2": 250,
+            "y2": 400
+        },
+        {
+            "x0": 250,
+            "y0": 440,
+            "x1": 300,
+            "y1": 440,
+            "x2": 250,
+            "y2": 400
         }
     ]
 }</textarea>
@@ -108,6 +108,7 @@
     <canvas id="leveleditor" width="640" height="480" tabindex="1">
         your browser sucks
     </canvas>
+    <input type="text" id="angleInput" hidden="true"></input>
 </div>
 <div id="images">
 <img src="data/wooden-block-50x10.png" id="block" />

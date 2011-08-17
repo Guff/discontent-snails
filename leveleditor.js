@@ -241,6 +241,16 @@ function onMouseDown(level, e) {
             break;
         case "rotate":
             break;
+        case "terrain":
+            var ret = mouseOverVertex(level.terrain, e);
+            var j = ret[0], verts = ret[1];
+            if (verts) {
+                canvas.onmousemove = function (e) { 
+                    onTerrainMouseMove(j, verts, e);
+                };
+                canvas.onmouseup = onMouseUp;
+            }
+            break;
     }
 }
 
@@ -259,6 +269,7 @@ function onKeyDown(e) {
             break;
         case 27: // escape
             mode = null;
+            drawLevel(ctx, level);
             break;
         default:
             break;
@@ -277,6 +288,7 @@ function onKeyDown(e) {
                     break;
                 case 84: // t
                     mode = "terrain";
+                    drawVertices(ctx, level.terrain);
                     break;
                 case 46: // delete
                     selection.forEach(deleteSelected);

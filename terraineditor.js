@@ -1,3 +1,4 @@
+var vertexColor = "rgba(40, 40, 200, 0.6)";
 var stoneBorder = "rgb(20, 30, 70)";
 
 function drawTerrain(ctx, terrain, pattern) {
@@ -12,12 +13,46 @@ function drawTerrain(ctx, terrain, pattern) {
         ctx.restore();
     }
     ctx.strokeStyle = stoneBorder;
+    ctx.lineWidth = 2;
     ctx.stroke();
     ctx.fillStyle = pattern;
     ctx.fill();
-    ctx.lineWidth = 2;
+    ctx.closePath();
 }
 
-function distance(a, b) {
-    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+function drawVertices(ctx, terrain) {
+    ctx.beginPath();
+    for (var i = 0; i < terrain.length; i++) {
+        var verts = terrain[i];
+        for (var j = 0; j < 3; j++) {
+            ctx.arc(verts["x" + j], verts["y" + j], 5, 0, 2 * Math.PI);
+            ctx.closePath();
+        }
+    }
+    
+    ctx.fillStyle = vertexColor;
+    ctx.fill();
+}
+
+function onTerrainMouseMove(j, verts, e) {
+    verts["x" + j] = e.pageX - canvas.offsetLeft;
+    verts["y" + j] = e.pageY - canvas.offsetTop;
+    drawLevel(ctx, level);
+    drawVertices(ctx, level.terrain);
+}
+
+function mouseOverVertex(terrain, e) {
+    for (var i = 0; i < terrain.length; i++) {
+        var verts = terrain[i];
+        for (var j = 0; j < 3; j++) {
+            if (distance(e.pageX - canvas.offsetLeft, e.pageY - canvas.offsetTop,
+                         verts["x" + j], verts["y" + j]) <= 5)
+                return [j, verts];
+        }
+    }
+    return [null, null];
+}
+
+function distance(x0, y0, x1, y1) {
+    return Math.sqrt(Math.pow(x0 - x1, 2) + Math.pow(y0 - y1, 2));
 }

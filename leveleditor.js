@@ -4,6 +4,7 @@ var textures;
 var angleInput;
 var level;
 var selection = [];
+var prevSelection;
 var imageRect = null;
 var selectionColor = "rgba(180, 40, 40, 0.4)";
 var borderColor = "rgba(160, 20, 20, 0.525)";
@@ -200,7 +201,22 @@ function onMouseMove(body, pos, e) {
 function onMouseDown(level, e) {
     canvas.focus();
     switch (mode) {
-        case null:
+        case "rotate":
+            break;
+        case "terrain":
+            var ret = mouseOverVertex(level.terrain, e);
+            var j = ret[0], verts = ret[1];
+            if (verts) {
+                canvas.onmousemove = function (e) { 
+                    onTerrainMouseMove(j, verts, e);
+                };
+                canvas.onmouseup = onMouseUp;
+                
+                selection = [{ j: j, verts: verts }];
+                drawVertices(ctx, level.terrain);
+            }
+            break;
+        default:
             var body, pos;
             var boundingBoxes = getBoundingBoxes(level);
             
@@ -239,18 +255,6 @@ function onMouseDown(level, e) {
             canvas.onmousemove = function (e) { onMouseMove(body, pos, e); };
             canvas.onmouseup = onMouseUp;
             break;
-        case "rotate":
-            break;
-        case "terrain":
-            var ret = mouseOverVertex(level.terrain, e);
-            var j = ret[0], verts = ret[1];
-            if (verts) {
-                canvas.onmousemove = function (e) { 
-                    onTerrainMouseMove(j, verts, e);
-                };
-                canvas.onmouseup = onMouseUp;
-            }
-            break;
     }
 }
 
@@ -258,7 +262,9 @@ function onMouseUp(e) {
     canvas.onmousemove = null;
 }
 
+var ev;
 function onKeyDown(e) {
+    ev = e;
     if (document.activeElement != canvas)
         return true;
     // global key bindings
@@ -268,6 +274,8 @@ function onKeyDown(e) {
             drawLevel(ctx, level);
             break;
         case 27: // escape
+            if (mode == "terrain")
+                selection = prevSelection;
             mode = null;
             drawLevel(ctx, level);
             break;
@@ -277,7 +285,50 @@ function onKeyDown(e) {
     
     // context-specific keybindings
     switch (mode) {
-        case null:
+        case "rot":
+            switch (e.keyCode) {
+                case 65: // a
+                    if (e.shiftKey)
+                        angleInput.addEventListener("keydown",
+                                                    onAngleAbsKeyPress, false);
+                    else
+                        angleInput.addEventListener("keydown",
+                                                    onAngleRelKeyPress, false);
+                    angleInput.hidden = false;
+                    angleInput.focus();
+                    break;
+                case 82: // r
+                    mode = null;
+                    break;
+                case 37: // left
+                    selection.forEach(function (body) {
+                        body.body.angle -= e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                case 39: // right
+                    selection.forEach(function (body) {
+                        body.body.angle += e.shiftKey ? 10 : 1;
+                    });
+                    drawLevel(ctx, level);
+                    break;
+                default:
+                    break;
+            }
+        case "terrain":
+            switch (e.keyCode) {
+                case 84: // t
+                    mode = null;
+                    drawLevel(ctx, level);
+                    break;
+                case 78: // n
+                    addTriangle(level.terrain);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
             switch (e.keyCode) {
                 case 68: // d
                     selection.forEach(duplicateSelected);
@@ -288,6 +339,9 @@ function onKeyDown(e) {
                     break;
                 case 84: // t
                     mode = "terrain";
+                    prevSelection = selection;
+                    selection = [];
+                    drawLevel(ctx, level);
                     drawVertices(ctx, level.terrain);
                     break;
                 case 46: // delete
@@ -322,44 +376,6 @@ function onKeyDown(e) {
                     console.log(e.keyCode);
                     break;
             }
-            break;
-        case "rot":
-            switch (e.keyCode) {
-                case 65: // a
-                    if (e.shiftKey)
-                        angleInput.addEventListener("keydown",
-                                                    onAngleAbsKeyPress, false);
-                    else
-                        angleInput.addEventListener("keydown",
-                                                    onAngleRelKeyPress, false);
-                    angleInput.hidden = false;
-                    angleInput.focus();
-                    break;
-                case 82: // r
-                    mode = null;
-                    break;
-                case 37: // left
-                    selection.forEach(function (body) {
-                        body.body.angle -= e.shiftKey ? 10 : 1;
-                    });
-                    drawLevel(ctx, level);
-                    break;
-                case 39: // right
-                    selection.forEach(function (body) {
-                        body.body.angle += e.shiftKey ? 10 : 1;
-                    });
-                    drawLevel(ctx, level);
-                    break;
-                default:
-                    break;
-            }
-        case "terrain":
-            switch (e.keyCode) {
-                default:
-                    break;
-            }
-            break;
-        default:
             break;
     }
     
@@ -435,7 +451,8 @@ function drawLevel(ctx, level) {
     drawSlingshot(ctx, level.slingshot);
     level.obstacles.forEach(function (body) { drawBody(ctx, body); });
     level.enemies.forEach(function (enemy) { drawEnemy(ctx, enemy); });
-    drawSelection();
+    if (mode != "terrain")
+        drawSelection();
     ctx.restore();
 }
 

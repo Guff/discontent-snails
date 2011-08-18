@@ -150,8 +150,8 @@ void init_world(level_t *level) {
 
     slingshot->body = cpBodyNewStatic();
     slingshot->shape = cpSegmentShapeNew(slingshot->body, cpv(0, 0),
-                                         cpv(0, -40), 0);
-    slingshot->bitmap = al_create_bitmap(13, 40);
+                                         cpv(0, -80), 0);
+    slingshot->bitmap = al_create_bitmap(40, 80);
     
     cpBodySetPos(slingshot->body, cpv(level->slingshot.x, level->slingshot.y));
     cpSpaceAddShape(space, slingshot->shape);
@@ -160,8 +160,8 @@ void init_world(level_t *level) {
     ground->bitmap = table_lookup(textures, "ground");
     
     al_set_target_bitmap(slingshot->bitmap);
-    al_draw_scaled_bitmap(table_lookup(textures, "slingshot"), 0, 0, 40, 120, 0,
-                          0, 13, 40, 0);
+    al_draw_scaled_bitmap(table_lookup(textures, "slingshot"), 0, 0, 160, 320, 0,
+                          0, 40, 80, 0);
     
     terrain_bitmap = al_create_bitmap(2 * WIDTH, 2 * HEIGHT);
     al_set_target_bitmap(terrain_bitmap);
@@ -228,7 +228,7 @@ void init_bodies(level_t *level) {
     snail->bitmap = al_create_bitmap(30, 30);
     
     spring = cpDampedSpringNew(snail->body, slingshot->body, cpv(0, 0),
-                               cpv(0, -40), 50, 10, 0);
+                               cpv(0, -80), 50, 10, 0);
     cpSpaceAddConstraint(space, spring);
 
     al_set_target_bitmap(snail->bitmap);
@@ -332,7 +332,7 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
                            snail_ang, 0);
     
     cpVect sling_pos = cpBodyGetPos(slingshot->body);
-    al_draw_bitmap(slingshot->bitmap, sling_pos.x - 7, sling_pos.y - 40, 0);
+    al_draw_bitmap(slingshot->bitmap, sling_pos.x - 20, sling_pos.y - 80, 0);
     
     for (uint32_t i = 0; i < obstacles->len; i++) {
         body_t *body = ptr_array_index(obstacles, i);

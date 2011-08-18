@@ -1,7 +1,6 @@
 * {
     padding: 0px;
     margin: 0px;
-    font-family: 'Anonymous Pro', sans-serif;
 }
 
 #levelText {
@@ -10,6 +9,7 @@
 }
 
 #levelEditor {
+    font-family: 'Anonymous Pro', sans-serif;
     padding-left: 5px;
 }
 
@@ -32,6 +32,7 @@
 }
 
 #angleInput {
+    font-family: 'Anonymous Pro', sans-serif;
     font-size: 13px;
     height: 13px;
     width: 100px;

@@ -6,8 +6,6 @@
 
 #include "level.h"
 
-#define LVL_FSIZE       8192
-
 static level_data_t* level_data_new(void) {
     return calloc(1, sizeof(level_data_t));
 }

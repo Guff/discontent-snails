@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>discontent snails level editor</title>
 <link rel="stylesheet" type="text/css" href="leveleditor.css" />
-<link href='http://fonts.googleapis.com/css?family=Anonymous+Pro:700' rel='stylesheet' type='text/css' />
+<link href='http://fonts.googleapis.com/css?family=Anonymous+Pro:400' rel='stylesheet' type='text/css' />
 <script type="text/javascript" src="terraineditor.js"></script>
 <script type="text/javascript" src="leveleditor.js"></script>
 </head>
@@ -105,14 +105,17 @@
 <button type="button" name="dicks" onclick="updateLevel();">update</button>
 </form>
 </div>
-<div id="levelCanvas">
-    <canvas id="leveleditor" width="640" height="480" tabindex="1">
+<div id="levelEditor">
+    <canvas id="levelCanvas" width="640" height="480" tabindex="1">
         your browser sucks
     </canvas>
     <input type="text" id="angleInput" hidden="true"></input>
-</div>
-<div id="statusBar">
-    <p id="statusText">BlAhblahblah</p>
+    <div id="statusBar">
+        <p id="statusText">
+            <span id="modeText" style="float:left"></span>
+            <span id="posText" style="float:right"></span>
+        </p>
+    </div>
 </div>
 <div id="images">
 <img src="data/wooden-block-50x10.png" id="block" />

@@ -5,6 +5,7 @@ var angleInput;
 var level;
 var selection = [];
 var prevSelection;
+var statusBar;
 var imageRect = null;
 var selectionColor = "rgba(180, 40, 40, 0.4)";
 var borderColor = "rgba(160, 20, 20, 0.525)";
@@ -15,7 +16,8 @@ var viewport = { x: 0, y: 0, zoom: 1 };
 
 function initEditor() {
     angleInput = document.getElementById("angleInput");
-    canvas = document.getElementById("leveleditor");
+    canvas = document.getElementById("levelCanvas");
+    statusBar = document.getElementById("statusBar");
     ctx = canvas.getContext("2d");
     level = JSON.parse(document.levelJSON.levelJSONtext.value);
     
@@ -31,6 +33,7 @@ function initEditor() {
     textures.stone =     document.getElementById("stone");
     stonePattern = ctx.createPattern(textures.stone, "repeat");
     drawLevel(ctx, level);
+    updateStatusBar();
     document.addEventListener("keydown", onKeyDown, true);
     canvas.addEventListener("mousedown", function (e) { onMouseDown(level, e); }, true);
     canvas.addEventListener("mouseup", onMouseUp, false);
@@ -154,6 +157,7 @@ function onScroll(e) {
     }
     
     drawLevel(ctx, level);
+    updateStatusBar();
     
     e.preventDefault();
     e.stopPropagation();
@@ -272,11 +276,13 @@ function onKeyDown(e) {
         case 49: // 1
             viewport = { x: 0, y: 0, zoom: 1 };
             drawLevel(ctx, level);
+            updateStatusBar();
             break;
         case 27: // escape
             if (mode == "terrain")
                 selection = prevSelection;
             mode = null;
+            updateStatusBar();
             drawLevel(ctx, level);
             break;
         default:
@@ -299,6 +305,7 @@ function onKeyDown(e) {
                     break;
                 case 82: // r
                     mode = null;
+                    updateStatusBar();
                     break;
                 case 37: // left
                     selection.forEach(function (body) {
@@ -319,6 +326,7 @@ function onKeyDown(e) {
             switch (e.keyCode) {
                 case 84: // t
                     mode = null;
+                    updateStatusBar();
                     drawLevel(ctx, level);
                     break;
                 case 78: // n
@@ -336,12 +344,14 @@ function onKeyDown(e) {
                     break;
                 case 82: // r
                     mode = "rot";
+                    updateStatusBar();
                     break;
                 case 84: // t
                     mode = "terrain";
                     prevSelection = selection;
                     selection = [];
                     drawLevel(ctx, level);
+                    updateStatusBar();
                     drawVertices(ctx, level.terrain);
                     break;
                 case 46: // delete
@@ -373,7 +383,7 @@ function onKeyDown(e) {
                     drawLevel(ctx, level);
                     break;
                 default:
-                    console.log(e.keyCode);
+                    //console.log(e.keyCode);
                     break;
             }
             break;
@@ -510,6 +520,16 @@ function drawBody(ctx, body) {
     ctx.scale(0.25, 0.25);
     ctx.drawImage(textures.block, -100, -20);
     ctx.restore();
+}
+
+function updateStatusBar() {
+    var modeTextEl = document.getElementById("modeText");
+    var posTextEl = document.getElementById("posText");
+    var modeText = mode || "normal";
+    modeTextEl.textContent = modeText;
+    var posText = "zoom: " + viewport.zoom;
+    posText += " dx: " + viewport.x + " dy:" + viewport.y;
+    posTextEl.textContent = posText; 
 }
 
 function deg2rad(ang) {

@@ -1,34 +1,33 @@
-div {
-    background-color: rgb(255, 255, 255);
+* {
+    padding: 0px;
     margin: 0px;
-    border: none;
 }
 
 #levelText {
     float: right;
 }
 
+#levelEditor {
+    padding-left: 5px;
+}
+
 #levelCanvas {
-/*
-    float: left;
-*/
-    border: none;
-    margin: 2px;
     width: 640px;
     height: 480px;
-    margin-bottom: 0px;
 }
 
 #statusBar {
-    background-color: rgb(120, 120, 120);
+    background-color: rgb(210, 210, 210);
     width: 640px;
-    height: 12px;
-    margin-top: 0px;
+    top: 480px;
+    position: absolute;
 }
 
 #statusText {
     font-family: 'Anonymous Pro', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
+    margin-left: 4px;
+    margin-right: 4px;
 }
 
 #angleInput {

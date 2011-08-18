@@ -24,14 +24,14 @@ function initEditor() {
     
     //updateHistory();
     
-    textures = { block: new Image(), slingshot: new Image(), bg: new Image(),
-                 ground: new Image(), snail: new Image() };
-    textures.block =     document.getElementById("block");
+    textures = {};
+    textures.block     = document.getElementById("block");
     textures.slingshot = document.getElementById("slingshot");
-    textures.bg =        document.getElementById("bg");
-    textures.ground =    document.getElementById("ground");
-    textures.snail =     document.getElementById("snail");
-    textures.stone =     document.getElementById("stone");
+    textures.bg        = document.getElementById("bg");
+    textures.ground    = document.getElementById("ground");
+    textures.snail     = document.getElementById("snail");
+    textures.stone     = document.getElementById("stone");
+    
     stonePattern = ctx.createPattern(textures.stone, "repeat");
     drawLevel(ctx, level);
     updateStatusBar();
@@ -66,9 +66,9 @@ function getBoundingBoxes(level) {
     boundingBoxes = new Array();
     
     boundingBoxes[0] = { type: "slingshot", body: level.slingshot,
-                         x: s * (level.slingshot.x + dx - 7),
-                         y: s * (level.slingshot.y + dy - 40),
-                         w: s * 14, h: s * 40 };
+                         x: s * (level.slingshot.x + dx - 20),
+                         y: s * (level.slingshot.y + dy - 80),
+                         w: s * 40, h: s * 80 };
     for (var i = 0; i < level.obstacles.length; i++) {
         obstacle = level.obstacles[i];
         var cos = Math.cos(deg2rad(obstacle.angle));
@@ -118,8 +118,10 @@ function onAngleRelKeyPress(e) {
 
     if (e.keyCode == 13) {
         angleInput.hidden = true;
-        angleInput.removeEventListener("keyup", onAngleRelKeyPress, false);
         canvas.focus();
+        subMode = null;
+        updateStatusBar();
+        angleInput.removeEventListener("keyup", onAngleRelKeyPress, false);
         return;
     }
     
@@ -491,9 +493,9 @@ function drawLevel(ctx, level) {
     ctx.translate(-viewport.x, viewport.y);
     ctx.scale(viewport.zoom, viewport.zoom);
     ctx.drawImage(textures.bg, 0, 0);
+    drawSlingshot(ctx, level.slingshot);
     ctx.drawImage(textures.ground, 0, 430);
     drawTerrain(ctx, level.terrain, stonePattern);
-    drawSlingshot(ctx, level.slingshot);
     level.obstacles.forEach(function (body) { drawBody(ctx, body); });
     level.enemies.forEach(function (enemy) { drawEnemy(ctx, enemy); });
     if (mode != "terrain")
@@ -508,7 +510,7 @@ function drawSelection() {
         ctx.translate(selection[i].body.x, selection[i].body.y);
         switch (selection[i].type) {
             case "slingshot":
-                ctx.rect(-7, -40, 13, 40);
+                ctx.rect(-20, -80, 40, 80);
                 break;
             case "enemy":
                 ctx.rotate(deg2rad(selection[i].body.angle));
@@ -534,8 +536,8 @@ function drawSelection() {
 function drawSlingshot(ctx, slingshot) {
     ctx.save();
     ctx.translate(slingshot.x, slingshot.y);
-    ctx.scale(1 / 3, 1 / 3);
-    ctx.drawImage(textures.slingshot, -20, -120);
+    ctx.scale(1 / 4, 1 / 4);
+    ctx.drawImage(textures.slingshot, -80, -320);
     ctx.restore();
 }
 

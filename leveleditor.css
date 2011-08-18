@@ -1,10 +1,12 @@
 * {
     padding: 0px;
     margin: 0px;
+    font-family: 'Anonymous Pro', sans-serif;
 }
 
 #levelText {
     float: right;
+    font-size: 14px;
 }
 
 #levelEditor {
@@ -24,17 +26,20 @@
 }
 
 #statusText {
-    font-family: 'Anonymous Pro', sans-serif;
     font-size: 13px;
     margin-left: 4px;
     margin-right: 4px;
 }
 
 #angleInput {
+    font-size: 13px;
+    height: 13px;
     width: 100px;
-    top: 320px;
+    top: 480px;
     left: 240px;
     position: absolute;
+    border: none;
+    background-color: rgb(210, 210, 210);
 }
 
 #images {

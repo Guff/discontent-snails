@@ -105,7 +105,7 @@ void destroyable_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data
     if (!body || body->type != BODY_TYPE_OBSTACLE || body->type != BODY_TYPE_ENEMY)
         body = cpShapeGetUserData(b);
     cpVect impulse = cpArbiterTotalImpulseWithFriction(arb);
-    body->damage += MAX(cpvlength(impulse) - 250, 0) / 200;
+    body->damage += MAX(cpvlength(impulse) - 250, 0) / 100;
     
     if (body->damage >= 1) {
         cpSpaceAddPostStepCallback(space, destroyable_collision_post_step, arb,

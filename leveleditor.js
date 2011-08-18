@@ -10,6 +10,7 @@ var imageRect = null;
 var selectionColor = "rgba(180, 40, 40, 0.4)";
 var borderColor = "rgba(160, 20, 20, 0.525)";
 var mode = null;
+var subMode = null;
 var history = [];
 var stonePattern;
 var viewport = { x: 0, y: 0, zoom: 1 };
@@ -107,28 +108,56 @@ function getBodyIndex(body) {
     }
     return -1;
 }
-
 function onAngleRelKeyPress(e) {
+    ev = e;
     selection.forEach(function (body) {
         body.body.angle += parseFloat(angleInput.value || 0);
     });
-    if (e.keyCode == 13 || e.keycode == 27) {
-        angleInput.removeEventListener("keydown", onAngleRelKeyPress);
+
+    drawLevel(ctx, level);
+
+    if (e.keyCode == 13) {
         angleInput.hidden = true;
+        angleInput.removeEventListener("keyup", onAngleRelKeyPress, false);
+        canvas.focus();
+        return;
     }
     
-    drawLevel(ctx, level);
+    selection.forEach(function (body) {
+        body.body.angle -= parseFloat(angleInput.value || 0);
+    });
+    
+    if (e.keyCode == 27) {
+        angleInput.hidden = true;
+        drawLevel(ctx, level);
+        canvas.focus();
+        subMode = null;
+        updateStatusBar();
+        angleInput.removeEventListener("keyup", onAngleRelKeyPress, false);
+    }
 }
 
 function onAngleAbsKeyPress(e) {
+    var prevAngles = [];
     selection.forEach(function (body) {
+        prevAngles.push(body.body.angle);
         body.body.angle = parseFloat(angleInput.value);
     });
-    if (e.keyCode == 13 || e.keycode == 27) {
-        angleInput.removeEventListener("keydown", onAngleAbsKeyPress);
+    if (e.keyCode == 13 || e.keyCode == 27) {
+        if (e.keyCode == 27) {
+            for (var i = 0; i < prevAngles.length; i++)
+                selection[i].body.angle = prevAngles[i];
+        }
+        
         angleInput.hidden = true;
+        canvas.focus();
+        subMode = null;
+        updateStatusBar();
+        angleInput.removeEventListener("keyup", onAngleAbsKeyPress, false);
     }
     drawLevel(ctx, level);
+    for (var i = 0; i < prevAngles.length; i++)
+        selection[i].body.angle = prevAngles[i];
 }
 
 function onScroll(e) {
@@ -294,18 +323,27 @@ function onKeyDown(e) {
         case "rot":
             switch (e.keyCode) {
                 case 65: // a
-                    if (e.shiftKey)
-                        angleInput.addEventListener("keydown",
+                    if (e.shiftKey) {
+                        angleInput.addEventListener("keyup",
                                                     onAngleAbsKeyPress, false);
-                    else
-                        angleInput.addEventListener("keydown",
+                        subMode = "abs";
+                        updateStatusBar();
+                    }
+                    else {
+                        angleInput.addEventListener("keyup",
                                                     onAngleRelKeyPress, false);
+                        subMode = "rel";
+                        updateStatusBar();
+                    }
+                    function onBlur(e) {
+                        angleInput.value = "";
+                        angleInput.hidden = true;
+                        angleInput.removeEventListener("blur", onBlur, false);
+                        canvas.focus();
+                    }
+                    angleInput.addEventListener("blur", onBlur, false);
                     angleInput.hidden = false;
                     angleInput.focus();
-                    break;
-                case 82: // r
-                    mode = null;
-                    updateStatusBar();
                     break;
                 case 37: // left
                     selection.forEach(function (body) {
@@ -324,11 +362,6 @@ function onKeyDown(e) {
             }
         case "terrain":
             switch (e.keyCode) {
-                case 84: // t
-                    mode = null;
-                    updateStatusBar();
-                    drawLevel(ctx, level);
-                    break;
                 case 78: // n
                     addTriangle(level.terrain);
                     break;
@@ -343,8 +376,10 @@ function onKeyDown(e) {
                     drawLevel(ctx, level);
                     break;
                 case 82: // r
-                    mode = "rot";
-                    updateStatusBar();
+                    if (selection.length) {
+                        mode = "rot";
+                        updateStatusBar();
+                    }
                     break;
                 case 84: // t
                     mode = "terrain";
@@ -526,7 +561,8 @@ function updateStatusBar() {
     var modeTextEl = document.getElementById("modeText");
     var posTextEl = document.getElementById("posText");
     var modeText = mode || "normal";
-    modeTextEl.textContent = modeText;
+    var subModeText = subMode ? ":" + subMode : "";
+    modeTextEl.textContent = modeText + subModeText;
     var posText = "zoom: " + viewport.zoom;
     posText += " dx: " + viewport.x + " dy:" + viewport.y;
     posTextEl.textContent = posText; 

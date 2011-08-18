@@ -3,37 +3,31 @@
     margin: 0px;
 }
 
-div {
-    background-color: rgb(255, 255, 255);
-    margin: 0px;
-    padding: 0px;
-    border: none;
-}
-
 #levelText {
     float: right;
 }
 
 #levelEditor {
-    margin: 2px;
+    padding-left: 5px;
 }
 
 #levelCanvas {
-    border: none;
-    padding: 0px;
     width: 640px;
     height: 480px;
-    margin-bottom: 0px;
 }
 
 #statusBar {
-    background-color: rgb(180, 180, 180);
+    background-color: rgb(210, 210, 210);
     width: 640px;
+    top: 480px;
+    position: absolute;
 }
 
 #statusText {
     font-family: 'Anonymous Pro', sans-serif;
     font-size: 13px;
+    margin-left: 4px;
+    margin-right: 4px;
 }
 
 #angleInput {

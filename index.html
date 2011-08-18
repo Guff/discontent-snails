@@ -106,14 +106,15 @@
 </form>
 </div>
 <div id="levelEditor">
-    <div id="levelCanvas">
-        <canvas id="leveleditor" width="640" height="480" tabindex="1">
-            your browser sucks
-        </canvas>
-        <input type="text" id="angleInput" hidden="true"></input>
-    </div>
+    <canvas id="levelCanvas" width="640" height="480" tabindex="1">
+        your browser sucks
+    </canvas>
+    <input type="text" id="angleInput" hidden="true"></input>
     <div id="statusBar">
-        <p id="statusText">BlAhblahblah</p>
+        <p id="statusText">
+            <span id="modeText" style="float:left"></span>
+            <span id="posText" style="float:right"></span>
+        </p>
     </div>
 </div>
 <div id="images">

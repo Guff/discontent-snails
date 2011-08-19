@@ -42,6 +42,13 @@ function initEditor() {
     canvas.addEventListener("mousewheel", onScroll, true);
 }
 
+function handleFile(files) {
+    var file = files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) { level = JSON.parse(e.target.result); drawLevel(ctx, level); };
+    reader.readAsText(file);
+}
+
 //function updateHistory() {
     //if (history.indexOf(level) > -1)
         //history = history.slice(0, history.indexOf(level));
@@ -62,7 +69,7 @@ function boxesIntersect(b0, b1) {
 
 function getBoundingBoxes(level) {
     var s = viewport.zoom;
-    var dx = viewport.x, dy = viewport.y;
+    var dx = -viewport.x, dy = viewport.y;
     boundingBoxes = new Array();
     
     boundingBoxes[0] = { type: "slingshot", body: level.slingshot,
@@ -73,8 +80,8 @@ function getBoundingBoxes(level) {
         obstacle = level.obstacles[i];
         var cos = Math.cos(deg2rad(obstacle.angle));
         var sin = Math.sin(deg2rad(obstacle.angle));
-        var w = cos * 50 + sin * 10;
-        var h = sin * 50 + cos * 10;
+        var w = Math.abs(cos) * 50 + Math.abs(sin) * 10;
+        var h = Math.abs(sin) * 50 + Math.abs(cos) * 10;
         boundingBoxes.push({ type: "obstacle", body: obstacle,
                              x: s *(obstacle.x + dx - w / 2),
                              y: s * (obstacle.y + dy - h / 2),
@@ -197,8 +204,8 @@ function onScroll(e) {
 }
 
 function mouseOverBody(body, e) {
-    var x = e.pageX - canvas.offsetLeft + viewport.x;
-    var y = e.pageY - canvas.offsetTop + viewport.y;
+    var x = e.pageX - canvas.offsetLeft;
+    var y = e.pageY - canvas.offsetTop;
     var bx0 = body.x, bx1 = body.x + body.w;
     var by0 = body.y, by1 = body.y + body.h;
     if (x >= bx0 && x <= bx1 && y >= by0 && y <= by1)
@@ -209,7 +216,7 @@ function mouseOverBody(body, e) {
 
 function onMouseMove(body, pos, e) {
     body.body.x = e.pageX - canvas.offsetLeft + viewport.x;
-    body.body.y = e.pageY - canvas.offsetTop + viewport.y;
+    body.body.y = e.pageY - canvas.offsetTop - viewport.y;
     switch (body.type) {
         case "slingshot":
             body.body.x += pos.x - 7;
@@ -265,8 +272,8 @@ function onMouseDown(level, e) {
                 if (!e.ctrlKey)
                     selection = [];
                 drawLevel(ctx, level);
-                pos = { x: e.pageX - canvas.offsetLeft + viewport.x,
-                        y: e.pageY - canvas.offsetTop + viewport.y };
+                pos = { x: e.pageX - canvas.offsetLeft,
+                        y: e.pageY - canvas.offsetTop };
                 canvas.onmousemove = function (e) { beginSelection(pos, e); };
                 canvas.onmouseup = function (e) { endSelection(pos, e); };
                 canvas.onmouseout = canvas.onmouseup;
@@ -433,8 +440,8 @@ function onKeyDown(e) {
 }
 
 function beginSelection(pos, e) {
-    var x = e.pageX - canvas.offsetLeft + viewport.x,
-        y = e.pageY - canvas.offsetTop + viewport.y;
+    var x = e.pageX - canvas.offsetLeft,
+        y = e.pageY - canvas.offsetTop;
     drawLevel(ctx, level);
     ctx.fillStyle = selectionColor;
     ctx.fillRect(Math.min(pos.x, x), Math.min(pos.y, y), Math.abs(x - pos.x),
@@ -446,8 +453,8 @@ function beginSelection(pos, e) {
 }
 
 function endSelection(pos, e) {
-    var x = Math.min(pos.x, e.pageX - canvas.offsetLeft + viewport.x),
-        y = Math.min(pos.y, e.pageY - canvas.offsetTop + viewport.y),
+    var x = Math.min(pos.x, e.pageX - canvas.offsetLeft),
+        y = Math.min(pos.y, e.pageY - canvas.offsetTop),
         w = Math.abs(e.pageX - canvas.offsetLeft - pos.x),
         h = Math.abs(e.pageY - canvas.offsetTop - pos.y);
     var selectionBox = { x: x, y: y, w: w, h: h };

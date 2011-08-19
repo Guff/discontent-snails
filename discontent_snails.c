@@ -44,9 +44,13 @@ enum {
     COLLISION_TYPE_STATIC
 };
 
+struct {
+    cpFloat pan_x, pan_y;
+    cpFloat zoom;
+} view;
+
 cpSpace *space;
 cpConstraint *spring;
-cpFloat zoom, pan_x;
 ALLEGRO_BITMAP *scene;
 ALLEGRO_BITMAP *terrain_bitmap;
 body_t *snail, *slingshot, *ground;
@@ -129,6 +133,42 @@ cpBool slingshot_collision_pre_solve(cpArbiter *arb, cpSpace *space, void *data)
     return cpTrue;
 }
 
+void terrain_draw(ptr_array_t *terrain, ALLEGRO_BITMAP *bitmap) {
+    al_set_target_bitmap(bitmap);
+    ALLEGRO_VERTEX v[terrain->len * 3 + 1];
+    for (uint i = 0; i < terrain->len; i++) {
+        triangle_t *tri = ptr_array_index(terrain, i);
+        v[3 * i].x = tri->x0 * 2;
+        v[3 * i].y = tri->y0 * 2;
+        v[3 * i].color = al_map_rgb(255, 255, 255);
+        v[3 * i].u = tri->x0 * 2;
+        v[3 * i].v = tri->y0 * 2;
+        
+        v[3 * i + 1].x = tri->x1 * 2;
+        v[3 * i + 1].y = tri->y1 * 2;
+        v[3 * i + 1].color = al_map_rgb(255, 255, 255);
+        v[3 * i + 1].u = tri->x1 * 2;
+        v[3 * i + 1].v = tri->y1 * 2;
+        
+        v[3 * i + 2].x = tri->x2 * 2;
+        v[3 * i + 2].y = tri->y2 * 2;
+        v[3 * i + 2].color = al_map_rgb(255, 255, 255);
+        v[3 * i + 2].u = tri->x2 * 2;
+        v[3 * i + 2].v = tri->y2 * 2;
+        
+        al_draw_triangle(tri->x0 * 2, tri->y0 * 2, tri->x1 * 2, tri->y1 * 2,
+                         tri->x2 * 2, tri->y2 * 2, al_map_rgb(20, 30, 70), 4);
+        
+        cpVect cp_tri[3] = { cpv(tri->x0, tri->y0), cpv(tri->x1, tri->y1),
+                             cpv(tri->x2, tri->y2) };
+        cpShape *tri_shape = cpPolyShapeNew(space->staticBody, 3, cp_tri,
+                                            cpv(0, 0));
+        cpSpaceAddShape(space, tri_shape);
+    }
+    al_draw_prim(v, NULL, table_lookup(textures, "stone"), 0,
+                 3 * terrain->len, ALLEGRO_PRIM_TRIANGLE_LIST);
+}
+
 void init_world(level_t *level) {
     space = cpSpaceNew();
     
@@ -164,39 +204,7 @@ void init_world(level_t *level) {
                           0, 40, 80, 0);
     
     terrain_bitmap = al_create_bitmap(2 * WIDTH, 2 * HEIGHT);
-    al_set_target_bitmap(terrain_bitmap);
-    ALLEGRO_VERTEX v[level->terrain->len * 3 + 1];
-    for (uint i = 0; i < level->terrain->len; i++) {
-        triangle_t *tri = ptr_array_index(level->terrain, i);
-        v[3 * i].x = tri->x0 * 2;
-        v[3 * i].y = tri->y0 * 2;
-        v[3 * i].color = al_map_rgb(255, 255, 255);
-        v[3 * i].u = tri->x0 * 2;
-        v[3 * i].v = tri->y0 * 2;
-        
-        v[3 * i + 1].x = tri->x1 * 2;
-        v[3 * i + 1].y = tri->y1 * 2;
-        v[3 * i + 1].color = al_map_rgb(255, 255, 255);
-        v[3 * i + 1].u = tri->x1 * 2;
-        v[3 * i + 1].v = tri->y1 * 2;
-        
-        v[3 * i + 2].x = tri->x2 * 2;
-        v[3 * i + 2].y = tri->y2 * 2;
-        v[3 * i + 2].color = al_map_rgb(255, 255, 255);
-        v[3 * i + 2].u = tri->x2 * 2;
-        v[3 * i + 2].v = tri->y2 * 2;
-        
-        al_draw_triangle(tri->x0 * 2, tri->y0 * 2, tri->x1 * 2, tri->y1 * 2,
-                         tri->x2 * 2, tri->y2 * 2, al_map_rgb(20, 30, 70), 4);
-        
-        cpVect cp_tri[3] = { cpv(tri->x0, tri->y0), cpv(tri->x1, tri->y1),
-                             cpv(tri->x2, tri->y2) };
-        cpShape *tri_shape = cpPolyShapeNew(space->staticBody, 3, cp_tri,
-                                            cpv(0, 0));
-        cpSpaceAddShape(space, tri_shape);
-    }
-    al_draw_prim(v, NULL, table_lookup(textures, "stone"), 0,
-                 3 * level->terrain->len, ALLEGRO_PRIM_TRIANGLE_LIST);
+    terrain_draw(level->terrain, terrain_bitmap);
 }
 
 void init_bodies(level_t *level) {
@@ -214,7 +222,9 @@ void init_bodies(level_t *level) {
     
     snail->body = cpSpaceAddBody(space, cpBodyNew(1, moment));
     
-    cpBodySetPos(snail->body, cpv(70, 435));
+    cpVect pos = cpBodyGetPos(slingshot->body);
+    
+    cpBodySetPos(snail->body, cpv(pos.x - 30, pos.y - 5));
     snail->shape = cpPolyShapeNew(snail->body, 
                                   sizeof(snail_verts) / sizeof(cpVect),
                                   snail_verts,
@@ -228,7 +238,7 @@ void init_bodies(level_t *level) {
     snail->bitmap = al_create_bitmap(30, 30);
     
     spring = cpDampedSpringNew(snail->body, slingshot->body, cpv(0, 0),
-                               cpv(0, -80), 50, 10, 0);
+                               cpv(0, -80), 1, 10, 0);
     cpSpaceAddConstraint(space, spring);
 
     al_set_target_bitmap(snail->bitmap);
@@ -254,6 +264,7 @@ void init_bodies(level_t *level) {
                                COLLISION_TYPE_DESTROYABLE, NULL, NULL,
                                destroyable_collision_post_solve, NULL, NULL);
     
+    // initialize obstacles
     for (uint32_t i = 0; i < level->obstacles->len; i++) {
         moment = cpMomentForBox(RECT_MASS, 50, 10);
         obstacle_t *obstacle = ptr_array_index(level->obstacles, i);
@@ -288,6 +299,7 @@ void init_bodies(level_t *level) {
         ptr_array_add(obstacles, body);
     }
     
+    // initialize enemies
     for (uint32_t i = 0; i < level->enemies->len; i++) {
         moment = cpMomentForBox(1.5, 30, 30);
         enemy_t *enemy = ptr_array_index(level->enemies, i);
@@ -351,8 +363,8 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
     
     al_set_target_backbuffer(display);
     al_identity_transform(&trans);
-    al_translate_transform(&trans, -pan_x, HEIGHT * zoom - 1440);
-    al_scale_transform(&trans, 1 / zoom, 1 / zoom);
+    al_translate_transform(&trans, -view.pan_x, -2 * (HEIGHT - view.pan_y) * view.zoom);
+    al_scale_transform(&trans, 1 / view.zoom, 1 / view.zoom);
     al_use_transform(&trans);
     al_clear_to_color(al_map_rgb(0, 0, 0));
     al_draw_bitmap(scene, 0, 0, 0);
@@ -362,11 +374,18 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
 
 void level_play(level_t *level, ALLEGRO_DISPLAY *display, 
                 ALLEGRO_EVENT_QUEUE *event_queue) {
+    struct {
+        bool ctrl;
+        bool shift;
+    } keys = { false, false };
+    
     victorious = false;
     bool running = true;
     bool pressed = false;
-    zoom = 1;
-    pan_x = 0;
+    view.zoom = 1;
+    view.pan_x = 0;
+    view.pan_y = 0;
+    
     ALLEGRO_EVENT ev;
     
     init_world(level);
@@ -391,7 +410,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     cpBodySetPos(mouse_body, cpv(pos.x - 25, pos.y - 10));
     cpConstraint *mouse_spring = cpDampedSpringNew(mouse_body, snail->body,
                                                    cpv(0, 0), cpv(0, 0),
-                                                   100, 25, 0);
+                                                   1, 25, 0);
     cpSpaceAddConstraint(space, mouse_spring);
     
     while (running) {
@@ -403,7 +422,6 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
             case ALLEGRO_EVENT_TIMER:
                 if (ev.timer.source == phys_timer) {
                     cpSpaceStep(space, PHYSICS_STEP);
-                    cpConstraintGetImpulse(mouse_spring);
                 }
                 else if (ev.timer.source == frames_timer)
                     draw_frame(display);
@@ -426,8 +444,31 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
                         cpBodyApplyImpulse(snail->body, cpv(75, 0), cpv(0, -10));
                         break;
                     case ALLEGRO_KEY_1:
-                        zoom = 1;
-                        pan_x = 1;
+                        view.zoom = 1;
+                        view.pan_x = 0;
+                        view.pan_y = 0;
+                        break;
+                    case ALLEGRO_KEY_LCTRL:
+                    case ALLEGRO_KEY_RCTRL:
+                        keys.ctrl = true;
+                        break;
+                    case ALLEGRO_KEY_LSHIFT:
+                    case ALLEGRO_KEY_RSHIFT:
+                        keys.shift = true;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case ALLEGRO_EVENT_KEY_UP:
+                switch (ev.keyboard.keycode) {
+                    case ALLEGRO_KEY_LCTRL:
+                    case ALLEGRO_KEY_RCTRL:
+                        keys.ctrl = false;
+                        break;
+                    case ALLEGRO_KEY_LSHIFT:
+                    case ALLEGRO_KEY_RSHIFT:
+                        keys.shift = false;
                         break;
                     default:
                         break;
@@ -442,20 +483,21 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
             }
                 break;
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
-                pressed = false;
-                if (mouse_spring) {
+                if (pressed && mouse_spring) {
                     cpSpaceRemoveConstraint(space, mouse_spring);
                     mouse_spring = NULL;
                 }
+                pressed = false;
                 break;
             case ALLEGRO_EVENT_MOUSE_AXES:
+                if (ev.mouse.dz && keys.ctrl)
+                    view.zoom = MAX(MIN(3, view.zoom - ev.mouse.dz / 10.0), 1 / 3.0);
                 if (ev.mouse.dz)
-                    zoom = MAX(MIN(3, zoom - ev.mouse.dz / 5.0), 1.0 / 3.0);
+                    view.pan_y += ev.mouse.dz * 10;
                 if (ev.mouse.dw)
-                    pan_x += ev.mouse.dw * 10;
+                    view.pan_x += ev.mouse.dw * 10;
                 if (pressed) {
                     cpBodySetPos(mouse_body, cpv(ev.mouse.x, ev.mouse.y));
-                    printf("%f\n", cpBodyGetPos(mouse_body).x);
                 }
                 break;
             default:

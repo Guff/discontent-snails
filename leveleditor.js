@@ -42,6 +42,13 @@ function initEditor() {
     canvas.addEventListener("mousewheel", onScroll, true);
 }
 
+function handleFile(files) {
+    var file = files[0];
+    var reader = new FileReader();
+    reader.onload = function (e) { level = JSON.parse(e.target.result); drawLevel(ctx, level); };
+    reader.readAsText(file);
+}
+
 //function updateHistory() {
     //if (history.indexOf(level) > -1)
         //history = history.slice(0, history.indexOf(level));

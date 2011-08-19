@@ -227,9 +227,9 @@ void init_bodies(level_t *level) {
     
     snail->bitmap = al_create_bitmap(30, 30);
     
-    //spring = cpDampedSpringNew(snail->body, slingshot->body, cpv(0, 0),
-                               //cpv(0, -80), 50, 10, 0);
-    //cpSpaceAddConstraint(space, spring);
+    spring = cpDampedSpringNew(snail->body, slingshot->body, cpv(0, 0),
+                               cpv(0, -80), 50, 10, 0);
+    cpSpaceAddConstraint(space, spring);
 
     al_set_target_bitmap(snail->bitmap);
     al_draw_scaled_bitmap(table_lookup(textures, "snail-normal"), 0, 0, 120,
@@ -386,7 +386,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     
     al_set_system_mouse_cursor(display, ALLEGRO_SYSTEM_MOUSE_CURSOR_MOVE);
     
-    cpBody *mouse_body = cpBodyNewStatic();
+    cpBody *mouse_body = cpBodyNew(INFINITY, INFINITY);
     cpVect pos = cpBodyGetPos(snail->body);
     cpBodySetPos(mouse_body, cpv(pos.x - 25, pos.y - 10));
     cpConstraint *mouse_spring = cpDampedSpringNew(mouse_body, snail->body,

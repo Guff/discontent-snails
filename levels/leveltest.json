@@ -1,6 +1,8 @@
 {
     "name": "Test level",
     "num": 1,
+    "width": 640,
+    "height": 480,
     "obstacles": [
         {
             "type": "block",

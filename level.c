@@ -86,6 +86,24 @@ level_t* level_parse(const char *filename) {
         goto root_lbl;
     }
     
+    json_t *width_obj = json_object_get(root, "width");
+    if (!json_is_number(width_obj)) {
+        fprintf(stderr, "\"width\" is not a number\n");
+        parse_error = true;
+        goto root_lbl;
+    }
+    
+    level->width = json_number_value(width_obj);
+    
+    json_t *height_obj = json_object_get(root, "height");
+    if (!json_is_number(height_obj)) {
+        fprintf(stderr, "\"height\" is not a number\n");
+        parse_error = true;
+        goto root_lbl;
+    }
+    
+    level->height = json_number_value(height_obj);
+    
     json_t *obstacles = json_object_get(root, "obstacles");
     
     if (!json_is_array(obstacles)) {

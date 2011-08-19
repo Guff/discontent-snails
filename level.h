@@ -18,6 +18,7 @@ typedef struct {
 } level_data_t;
 
 typedef struct {
+    double width, height;
     ptr_array_t *obstacles;
     ptr_array_t *enemies;
     slingshot_t slingshot;

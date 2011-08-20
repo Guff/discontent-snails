@@ -92,7 +92,7 @@ function getBoundingBoxes(level) {
         var cos =  Math.cos(deg2rad(enemy.angle));
         var sin = Math.sin(deg2rad(enemy.angle));
         var w = cos * 30 + sin * 30;
-        var h = sin * 30 + cos * 30
+        var h = sin * 30 + cos * 30;
         boundingBoxes.push({ type: "enemy", body: enemy,
                              x: s * (enemy.x + dx - w / 2),
                              y: s * (enemy.y + dy - h / 2),
@@ -246,16 +246,29 @@ function onMouseDown(level, e) {
         case "rotate":
             break;
         case "terrain":
+            var pos = { x: e.pageX - canvas.offsetLeft,
+                        y: e.pageY - canvas.offsetTop };
             var ret = mouseOverVertex(level.terrain, e);
             var j = ret[0], verts = ret[1];
-            if (verts) {
+            if (!verts) {
+                selection = [];
+                drawLevel(ctx, level);
+                canvas.onmousemove = function (e) {
+                    beginSelection(pos, vertexSelectionColor, vertexBorderColor, e);
+                };
+                canvas.onmouseup = function (e) { endVertexSelection(pos, e); };
+                canvas.onmouseout = canvas.onmouseup;
+            } else {
                 canvas.onmousemove = function (e) { 
                     onTerrainMouseMove(j, verts, e);
                 };
                 canvas.onmouseup = onMouseUp;
                 
-                selection = [{ j: j, verts: verts }];
-                drawVertices(ctx, level.terrain);
+                if (e.ctrlKey)
+                    selection.push({ j: j, verts: verts });
+                else
+                    selection = [{ j: j, verts: verts }];
+                drawLevel(ctx, level);
             }
             break;
         default:
@@ -274,7 +287,9 @@ function onMouseDown(level, e) {
                 drawLevel(ctx, level);
                 pos = { x: e.pageX - canvas.offsetLeft,
                         y: e.pageY - canvas.offsetTop };
-                canvas.onmousemove = function (e) { beginSelection(pos, e); };
+                canvas.onmousemove = function (e) { 
+                    beginSelection(pos, selectionColor, borderColor, e);
+                };
                 canvas.onmouseup = function (e) { endSelection(pos, e); };
                 canvas.onmouseout = canvas.onmouseup;
                 return;
@@ -374,6 +389,18 @@ function onKeyDown(e) {
                 case 78: // n
                     addTriangle(level.terrain);
                     break;
+                case 37: // left
+                    moveVertices(e.shiftKey ? -10 : -1, 0);
+                    break;
+                case 39: // right
+                    moveVertices(e.shiftKey ? 10 : 1, 0);
+                    break;
+                case 38: // up
+                    moveVertices(0, e.shiftKey ? -10 : -1);
+                    break;
+                case 40: // down
+                    moveVertices(0, e.shiftKey ? 10 : 1);
+                    break;
                 default:
                     break;
             }
@@ -394,9 +421,8 @@ function onKeyDown(e) {
                     mode = "terrain";
                     prevSelection = selection;
                     selection = [];
-                    drawLevel(ctx, level);
                     updateStatusBar();
-                    drawVertices(ctx, level.terrain);
+                    drawLevel(ctx, level);
                     break;
                 case 46: // delete
                     selection.forEach(deleteSelected);
@@ -439,17 +465,18 @@ function onKeyDown(e) {
     return false;
 }
 
-function beginSelection(pos, e) {
+function beginSelection(pos, color, border, e) {
     var x = e.pageX - canvas.offsetLeft,
         y = e.pageY - canvas.offsetTop;
     drawLevel(ctx, level);
-    ctx.fillStyle = selectionColor;
-    ctx.fillRect(Math.min(pos.x, x), Math.min(pos.y, y), Math.abs(x - pos.x),
-                 Math.abs(y - pos.y));
-    ctx.strokeStyle = borderColor;
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = border;
     ctx.lineWidth = 2;
-    ctx.strokeRect(Math.min(pos.x, x), Math.min(pos.y, y), Math.abs(x - pos.x),
-                   Math.abs(y - pos.y));
+    ctx.rect(Math.min(pos.x, x), Math.min(pos.y, y), Math.abs(x - pos.x),
+             Math.abs(y - pos.y));
+    ctx.fill();
+    ctx.stroke();
 }
 
 function endSelection(pos, e) {
@@ -507,6 +534,8 @@ function drawLevel(ctx, level) {
     level.enemies.forEach(function (enemy) { drawEnemy(ctx, enemy); });
     if (mode != "terrain")
         drawSelection();
+    else
+        drawVertices(ctx, level.terrain);
     ctx.restore();
 }
 

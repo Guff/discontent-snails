@@ -34,6 +34,14 @@ function vertexInSelection(x, y) {
     return false;
 }
 
+function indexOfTriangle(verts, selection) {
+    for (var i = 0; i < selection.length; i++) {
+        if (verts == selection[i].verts)
+            return i;
+    }
+    return -1;
+}
+
 function drawVertices(ctx, terrain) {
     ctx.fillStyle = vertexColor;
     for (var i = 0; i < terrain.length; i++) {
@@ -51,8 +59,8 @@ function drawVertices(ctx, terrain) {
 }
 
 function onTerrainMouseMove(j, verts, e) {
-    verts["x" + j] = e.pageX - canvas.offsetLeft;
-    verts["y" + j] = e.pageY - canvas.offsetTop;
+    verts["x" + j] = (e.pageX - canvas.offsetLeft + view.x) / view.zoom;
+    verts["y" + j] = (e.pageY - canvas.offsetTop - view.y) / view.zoom;
     drawLevel(ctx, level);
 }
 
@@ -60,8 +68,10 @@ function mouseOverVertex(terrain, e) {
     for (var i = 0; i < terrain.length; i++) {
         var verts = terrain[i];
         for (var j = 0; j < 3; j++) {
-            if (distance(e.pageX - canvas.offsetLeft, e.pageY - canvas.offsetTop,
-                         verts["x" + j], verts["y" + j]) <= 5)
+            if (distance((e.pageX - canvas.offsetLeft + view.x) / view.zoom,
+                         (e.pageY - canvas.offsetTop - view.y) / view.zoom,
+                         verts["x" + j],
+                         verts["y" + j]) <= 5)
                 return [j, verts];
         }
     }
@@ -69,6 +79,21 @@ function mouseOverVertex(terrain, e) {
 }
 
 function endVertexSelection(pos, e) {
+    var x0 = (Math.min(pos.x, e.pageX - canvas.offsetLeft) + view.x) / view.zoom,
+        y0 = (Math.min(pos.y, e.pageY - canvas.offsetTop) - view.y) / view.zoom,
+        x1 = (Math.max(pos.x, e.pageX - canvas.offsetLeft) + view.x) / view.zoom,
+        y1 = (Math.max(pos.y, e.pageY - canvas.offsetTop) - view.y) / view.zoom;
+    
+    for (var i = 0; i < level.terrain.length; i++) {
+        var verts = level.terrain[i];
+        for (var j = 0; j < 3; j++) {
+            var vx = verts["x" + j], vy = verts["y" + j];
+            if (vx >= x0 && vx <= x1 && vy >= y0 && vy <= y1)
+                selection.push({ j: j, verts: verts })
+        }
+    }
+    
+    canvas.onmousemove = function (e) { lastMousePos = e; };
     drawLevel(ctx, level);
 }
 
@@ -83,7 +108,23 @@ function moveVertices(dx, dy) {
 }
 
 function addTriangle(terrain) {
-    terrain.push({ x0: 320, y0: 240, x1: 340, y1: 260, x2: 340, y2: 220 });
+    var x = lastMousePos.pageX - canvas.offsetLeft,
+        y = lastMousePos.pageY - canvas.offsetTop;
+    terrain.push({ x0: x, y0: y, x1: x + 20, y1: y + 20, x2: x + 20, y2: y - 20 });
+    drawLevel(ctx, level);
+}
+
+function deleteTriangles() {
+    var triangles = [];
+    for (var i = 0; i < selection.length; i++) {
+        triangles.push(selection[i].verts);
+        level.terrain.splice(level.terrain.indexOf(triangles[i]), 1);
+        while (indexOfTriangle(triangles[i], selection) != -1) {
+            selection.splice(indexOfTriangle(triangles[i], selection), 1);
+        }
+    }
+    console.log(triangles);
+    console.log(level.terrain);
     drawLevel(ctx, level);
 }
 

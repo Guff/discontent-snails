@@ -5,6 +5,7 @@ var angleInput;
 var level;
 var selection = [];
 var prevSelection;
+var lastMousePos = null;
 var statusBar;
 var imageRect = null;
 var selectionColor = "rgba(180, 40, 40, 0.4)";
@@ -13,7 +14,7 @@ var mode = null;
 var subMode = null;
 var history = [];
 var stonePattern;
-var viewport = { x: 0, y: 0, zoom: 1 };
+var view = { x: 0, y: 0, zoom: 1 };
 
 function initEditor() {
     angleInput = document.getElementById("angleInput");
@@ -68,8 +69,8 @@ function boxesIntersect(b0, b1) {
 }
 
 function getBoundingBoxes(level) {
-    var s = viewport.zoom;
-    var dx = -viewport.x, dy = viewport.y;
+    var s = view.zoom;
+    var dx = -view.x, dy = view.y;
     boundingBoxes = new Array();
     
     boundingBoxes[0] = { type: "slingshot", body: level.slingshot,
@@ -170,6 +171,7 @@ function onAngleAbsKeyPress(e) {
 }
 
 function onScroll(e) {
+    lastMousePos = e;
     var dx = e.detail || -e.wheelDeltaX / 120;
     var dy = e.detail || -e.wheelDeltaY / 120;
     var axis;
@@ -184,14 +186,14 @@ function onScroll(e) {
     
     if (axis == 1) {
         if (e.shiftKey)
-            viewport.y += dy * 5;
+            view.y += dy * 5;
         else
-            viewport.x = Math.max(viewport.x + dx * 5, 0);
+            view.x = Math.max(view.x + dx * 5, 0);
     } else if (axis == 2) {
         if (e.ctrlKey)
-            viewport.zoom = Math.max(Math.min(viewport.zoom - dy / 20, 3), 1 / 3);
+            view.zoom = Math.max(Math.min(view.zoom - dy / 20, 3), 1 / 3);
         else
-            viewport.y -= dy * 5;
+            view.y -= dy * 5;
     }
     
     drawLevel(ctx, level);
@@ -215,8 +217,9 @@ function mouseOverBody(body, e) {
 }
 
 function onMouseMove(body, pos, e) {
-    body.body.x = e.pageX - canvas.offsetLeft + viewport.x;
-    body.body.y = e.pageY - canvas.offsetTop - viewport.y;
+    lastMousePos = e;
+    body.body.x = e.pageX - canvas.offsetLeft + view.x;
+    body.body.y = e.pageY - canvas.offsetTop - view.y;
     switch (body.type) {
         case "slingshot":
             body.body.x += pos.x - 7;
@@ -241,6 +244,7 @@ function onMouseMove(body, pos, e) {
 }
 
 function onMouseDown(level, e) {
+    lastMousePos = e;
     canvas.focus();
     switch (mode) {
         case "rotate":
@@ -316,7 +320,8 @@ function onMouseDown(level, e) {
 }
 
 function onMouseUp(e) {
-    canvas.onmousemove = null;
+    lastMousePos = e;
+    canvas.onmousemove = function (e) { lastMousePos = e; };
 }
 
 var ev;
@@ -327,7 +332,7 @@ function onKeyDown(e) {
     // global key bindings
     switch (e.keyCode) {
         case 49: // 1
-            viewport = { x: 0, y: 0, zoom: 1 };
+            view = { x: 0, y: 0, zoom: 1 };
             drawLevel(ctx, level);
             updateStatusBar();
             break;
@@ -388,6 +393,9 @@ function onKeyDown(e) {
             switch (e.keyCode) {
                 case 78: // n
                     addTriangle(level.terrain);
+                    break;
+                case 46: // delete
+                    deleteTriangles();
                     break;
                 case 37: // left
                     moveVertices(e.shiftKey ? -10 : -1, 0);
@@ -492,8 +500,8 @@ function endSelection(pos, e) {
     
     drawLevel(ctx, level);
     imageRect = null;
-    canvas.onmousemove = null;
-    canvas.onmouseout = null;
+    canvas.onmousemove = function (e) { lastMousePos = e };
+    canvas.onmouseout = canvas.onmousemove;
 }
 
 function deleteSelected(body) {
@@ -524,8 +532,8 @@ function updateLevel() {
 function drawLevel(ctx, level) {
     document.levelJSON.levelJSONtext.value = JSON.stringify(level, null, 4);
     ctx.save();
-    ctx.translate(-viewport.x, viewport.y);
-    ctx.scale(viewport.zoom, viewport.zoom);
+    ctx.translate(-view.x, view.y);
+    ctx.scale(view.zoom, view.zoom);
     ctx.drawImage(textures.bg, 0, 0);
     drawSlingshot(ctx, level.slingshot);
     ctx.drawImage(textures.ground, 0, 430);
@@ -601,8 +609,8 @@ function updateStatusBar() {
     var modeText = mode || "normal";
     var subModeText = subMode ? ":" + subMode : "";
     modeTextEl.textContent = modeText + subModeText;
-    var posText = "zoom: " + viewport.zoom;
-    posText += " dx: " + viewport.x + " dy:" + viewport.y;
+    var posText = "zoom: " + view.zoom;
+    posText += " dx: " + view.x + " dy:" + view.y;
     posTextEl.textContent = posText; 
 }
 

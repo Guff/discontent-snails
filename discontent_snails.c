@@ -410,7 +410,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     cpBodySetPos(mouse_body, cpv(pos.x - 25, pos.y - 10));
     cpConstraint *mouse_spring = cpDampedSpringNew(mouse_body, snail->body,
                                                    cpv(0, 0), cpv(0, 0),
-                                                   1, 25, 0);
+                                                   1, 25, 0.5);
     cpSpaceAddConstraint(space, mouse_spring);
     
     while (running) {

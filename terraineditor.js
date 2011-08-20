@@ -1,5 +1,7 @@
 var vertexColor = "rgba(40, 40, 200, 0.6)";
 var selectedVertexColor = "rgba(40, 200, 40, 0.6)";
+var vertexSelectionColor = "rgba(40, 40, 140, 0.4)";
+var vertexBorderColor = "rgba(20, 20, 125, 0.5)";
 var stoneBorder = "rgb(20, 30, 70)";
 
 function drawTerrain(ctx, terrain, pattern) {
@@ -23,39 +25,35 @@ function drawTerrain(ctx, terrain, pattern) {
 
 function vertexInSelection(x, y) {
     for (var i = 0; i < selection.length; i++) {
-        for (var j = 0; j < 3; j++) {
-            var selX = selection[i].verts["x" + j],
-                selY = selection[i].verts["y" + j];
-            
-            if (selX == x && selY == y)
-                return true;
-        }
+        var j = selection[i].j;
+        var selX = selection[i].verts["x" + j],
+            selY = selection[i].verts["y" + j];
+        if (selX == x && selY == y)
+            return true;
     }
     return false;
 }
 
 function drawVertices(ctx, terrain) {
-    ctx.beginPath();
     ctx.fillStyle = vertexColor;
     for (var i = 0; i < terrain.length; i++) {
         var verts = terrain[i];
         for (var j = 0; j < 3; j++) {
+            ctx.beginPath();
             ctx.arc(verts["x" + j], verts["y" + j], 5, 0, 2 * Math.PI);
             ctx.closePath();
-            //if (vertexInSelection(verts["x" + j], verts["y" + j]))
-                //ctx.fillStyle = selectedVertexColor;
+            if (vertexInSelection(verts["x" + j], verts["y" + j]))
+                ctx.fillStyle = selectedVertexColor;
             ctx.fill();
-            //ctx.fillStyle = vertexColor;
+            ctx.fillStyle = vertexColor;
         }
     }
-    
 }
 
 function onTerrainMouseMove(j, verts, e) {
     verts["x" + j] = e.pageX - canvas.offsetLeft;
     verts["y" + j] = e.pageY - canvas.offsetTop;
     drawLevel(ctx, level);
-    drawVertices(ctx, level.terrain);
 }
 
 function mouseOverVertex(terrain, e) {
@@ -70,10 +68,23 @@ function mouseOverVertex(terrain, e) {
     return [null, null];
 }
 
+function endVertexSelection(pos, e) {
+    drawLevel(ctx, level);
+}
+
+function moveVertices(dx, dy) {
+    selection.forEach(function (vertices) {
+        var j = vertices.j;
+        var v = vertices.verts;
+        v["x" + j] += dx;
+        v["y" + j] += dy;
+    });
+    drawLevel(ctx, level);
+}
+
 function addTriangle(terrain) {
     terrain.push({ x0: 320, y0: 240, x1: 340, y1: 260, x2: 340, y2: 220 });
     drawLevel(ctx, level);
-    drawVertices(ctx, terrain);
 }
 
 function distance(x0, y0, x1, y1) {

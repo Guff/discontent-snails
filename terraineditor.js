@@ -69,6 +69,19 @@ function mouseOverVertex(terrain, e) {
 }
 
 function endVertexSelection(pos, e) {
+    var x0 = Math.min(pos.x, e.pageX - canvas.offsetLeft),
+        y0 = Math.min(pos.y, e.pageY - canvas.offsetTop),
+        x1 = Math.max(pos.x, e.pageX - canvas.offsetLeft),
+        y1 = Math.max(pos.y, e.pageY - canvas.offsetTop);
+    
+    for (var i = 0; i < level.terrain.length; i++) {
+        var verts = level.terrain[i];
+        for (var j = 0; j < 3; j++) {
+            var vx = verts["x" + j], vy = verts["y" + j];
+            if (vx >= x0 && vx <= x1 && vy >= y0 && vy <= y1)
+                selection.push({ j: j, verts: verts })
+        }
+    }
     drawLevel(ctx, level);
 }
 

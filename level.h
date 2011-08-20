@@ -19,11 +19,22 @@ typedef struct {
 
 typedef struct {
     double width, height;
+    ptr_array_t *snails;
     ptr_array_t *obstacles;
     ptr_array_t *enemies;
     slingshot_t slingshot;
     ptr_array_t *terrain;
 } level_t;
+
+typedef enum {
+    SNAIL_TYPE_NORMAL
+} snail_type_t;
+
+typedef struct {
+    snail_type_t type;
+    
+    double x, y;
+} snail_t;
 
 typedef enum {
     OBSTACLE_TYPE_BLOCK

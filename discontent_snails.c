@@ -53,8 +53,9 @@ cpSpace *space;
 cpConstraint *spring;
 ALLEGRO_BITMAP *scene;
 ALLEGRO_BITMAP *terrain_bitmap;
-body_t *snail, *slingshot, *ground;
+body_t *slingshot, *ground;
 table_t *textures;
+ptr_array_t *snails;
 ptr_array_t *obstacles;
 ptr_array_t *enemies;
 bool victorious;
@@ -208,44 +209,10 @@ void init_world(level_t *level) {
 }
 
 void init_bodies(level_t *level) {
-    snail = body_new();
+    snails = ptr_array_new();
     obstacles = ptr_array_new();
     enemies = ptr_array_new();
     
-    cpVect snail_verts[] = { cpv(-3, 14), cpv(13, 6), cpv(14, 0), cpv(12, -8),
-                             cpv(6, -13), cpv(0, -14), cpv(-9, -11), cpv(-12, -4),
-                             cpv(-13, 1), cpv(-9, 10) };
-    int snail_verts_n = sizeof(snail_verts) / sizeof(cpVect);
-    
-    cpFloat moment = cpMomentForPoly(1, snail_verts_n, snail_verts,
-                                     cpv(0, 0));
-    
-    snail->body = cpSpaceAddBody(space, cpBodyNew(1, moment));
-    
-    cpVect pos = cpBodyGetPos(slingshot->body);
-    
-    cpBodySetPos(snail->body, cpv(pos.x - 30, pos.y - 5));
-    snail->shape = cpPolyShapeNew(snail->body, 
-                                  sizeof(snail_verts) / sizeof(cpVect),
-                                  snail_verts,
-                                  cpv(0, 0));
-    cpShapeSetUserData(snail->shape, snail);
-    cpShapeSetElasticity(snail->shape, 0.85);
-    
-    cpShapeSetFriction(snail->shape, 0.6);
-    cpSpaceAddShape(space, snail->shape);
-    
-    snail->bitmap = al_create_bitmap(30, 30);
-    
-    spring = cpDampedSpringNew(snail->body, slingshot->body, cpv(0, 0),
-                               cpv(0, -80), 1, 10, 0);
-    cpSpaceAddConstraint(space, spring);
-
-    al_set_target_bitmap(snail->bitmap);
-    al_draw_scaled_bitmap(table_lookup(textures, "snail-normal"), 0, 0, 120,
-                          120, 0, 0, 30, 30, 0);
-    
-    cpShapeSetCollisionType(snail->shape, COLLISION_TYPE_SNAIL);
     cpShapeSetCollisionType(slingshot->shape, COLLISION_TYPE_SLINGSHOT);
     
     cpSpaceAddCollisionHandler(space, COLLISION_TYPE_SNAIL,
@@ -264,9 +231,51 @@ void init_bodies(level_t *level) {
                                COLLISION_TYPE_DESTROYABLE, NULL, NULL,
                                destroyable_collision_post_solve, NULL, NULL);
     
+    cpVect snail_normal_verts[] = { cpv(-3, 14), cpv(13, 6), cpv(14, 0),
+                                    cpv(12, -8), cpv(6, -13), cpv(0, -14),
+                                    cpv(-9, -11), cpv(-12, -4), cpv(-13, 1),
+                                    cpv(-9, 10) };
+    int snail_normal_verts_n = sizeof(snail_normal_verts) / sizeof(cpVect);
+    
+    // initialize snails
+    for (uint32_t i = 0; i < level->snails->len; i++) {
+        cpFloat moment = cpMomentForPoly(1, snail_normal_verts_n,
+                                         snail_normal_verts,
+                                         cpvzero);
+        
+        snail_t *snail = ptr_array_index(level->snails, i);
+        body_t *body = body_new();
+        body->type = BODY_TYPE_SNAIL;
+        body->body = cpSpaceAddBody(space, cpBodyNew(1, moment));
+        cpBodySetPos(body->body, cpv(snail->x, snail->y));
+        
+        body->shape = cpPolyShapeNew(body->body,
+                                     snail_normal_verts_n,
+                                     snail_normal_verts,
+                                     cpvzero);
+        cpShapeSetUserData(body->shape, body);
+        cpShapeSetElasticity(body->shape, 0.85);
+        
+        cpShapeSetFriction(body->shape, 0.6);
+        cpSpaceAddShape(space, body->shape);
+        
+        body->bitmap = al_create_bitmap(30, 30);
+        al_set_target_bitmap(body->bitmap);
+        al_draw_scaled_bitmap(table_lookup(textures, "snail-normal"), 0, 0, 120,
+                          120, 0, 0, 30, 30, 0);    
+
+        cpShapeSetCollisionType(body->shape, COLLISION_TYPE_SNAIL);
+        
+        ptr_array_add(snails, body);
+    }
+    
+    spring = cpDampedSpringNew(((body_t *)ptr_array_index(snails, 0))->body,
+                               slingshot->body, cpvzero, cpv(0, -80), 1, 10, 0);
+    cpSpaceAddConstraint(space, spring);
+    
     // initialize obstacles
     for (uint32_t i = 0; i < level->obstacles->len; i++) {
-        moment = cpMomentForBox(RECT_MASS, 50, 10);
+        cpFloat moment = cpMomentForBox(RECT_MASS, 50, 10);
         obstacle_t *obstacle = ptr_array_index(level->obstacles, i);
         body_t *body = body_new();
         body->type = BODY_TYPE_OBSTACLE;
@@ -301,7 +310,7 @@ void init_bodies(level_t *level) {
     
     // initialize enemies
     for (uint32_t i = 0; i < level->enemies->len; i++) {
-        moment = cpMomentForBox(1.5, 30, 30);
+        cpFloat moment = cpMomentForBox(1.5, 30, 30);
         enemy_t *enemy = ptr_array_index(level->enemies, i);
         body_t *body = body_new();
         body->type = BODY_TYPE_ENEMY;
@@ -336,22 +345,25 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
     al_draw_bitmap(ground->bitmap, 0, HEIGHT - 50, 0);
     al_draw_scaled_bitmap(terrain_bitmap, 0, 0, 2 * WIDTH, 2 * HEIGHT, 0, 0,
                           WIDTH, HEIGHT, 0);
-    
-    cpVect snail_pos = cpBodyGetPos(snail->body);
-    cpFloat snail_ang = cpBodyGetAngle(snail->body);
-    
-    al_draw_rotated_bitmap(snail->bitmap, 15, 15, snail_pos.x, snail_pos.y,
-                           snail_ang, 0);
-    
+                          
     cpVect sling_pos = cpBodyGetPos(slingshot->body);
     al_draw_bitmap(slingshot->bitmap, sling_pos.x - 20, sling_pos.y - 80, 0);
+    
+    for (uint32_t i = 0; i < snails->len; i++) {
+        body_t *body = ptr_array_index(snails, i);
+            
+        cpVect pos = cpBodyGetPos(body->body);
+        cpFloat angle = cpBodyGetAngle(body->body);
+        
+        al_draw_rotated_bitmap(body->bitmap, 15, 15, pos.x, pos.y,
+                               angle, 0);
+    }
     
     for (uint32_t i = 0; i < obstacles->len; i++) {
         body_t *body = ptr_array_index(obstacles, i);
         cpVect pos = cpBodyGetPos(body->body);
         cpFloat angle = cpBodyGetAngle(body->body);
         al_draw_rotated_bitmap(body->bitmap, 25, 5, pos.x, pos.y, angle, 0);
-        //printf("%f\n", body->damage);
     }
     
     for (uint32_t i = 0; i < enemies->len; i++) {
@@ -391,6 +403,8 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     init_world(level);
     init_bodies(level);
     
+    cpSpaceSetSleepTimeThreshold(space, 5.0);
+    
     ALLEGRO_TIMER *frames_timer = al_create_timer(1 / FPS);
     ALLEGRO_TIMER *phys_timer = al_create_timer(PHYSICS_STEP);
     
@@ -406,6 +420,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     al_set_system_mouse_cursor(display, ALLEGRO_SYSTEM_MOUSE_CURSOR_MOVE);
     
     cpBody *mouse_body = cpBodyNew(INFINITY, INFINITY);
+    body_t *snail = ptr_array_index(snails, 0);
     cpVect pos = cpBodyGetPos(snail->body);
     cpBodySetPos(mouse_body, cpv(pos.x - 25, pos.y - 10));
     cpConstraint *mouse_spring = cpDampedSpringNew(mouse_body, snail->body,
@@ -422,6 +437,11 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
             case ALLEGRO_EVENT_TIMER:
                 if (ev.timer.source == phys_timer) {
                     cpSpaceStep(space, PHYSICS_STEP);
+                    if (cpBodyIsSleeping(snail->body)) {
+                        cpSpaceRemoveShape(space, snail->shape);
+                        cpSpaceRemoveBody(space, snail->body);
+                        ptr_array_remove(snails, snail);
+                    }
                 }
                 else if (ev.timer.source == frames_timer)
                     draw_frame(display);

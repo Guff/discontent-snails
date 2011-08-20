@@ -67,6 +67,7 @@ void level_free(level_t *level) {
     ptr_array_free(level->obstacles, true);
     ptr_array_free(level->enemies, true);
     ptr_array_free(level->terrain, true);
+    ptr_array_free(level->snails, true);
     free(level);
 }
 
@@ -79,6 +80,7 @@ level_t* level_parse(const char *filename) {
     level->obstacles = ptr_array_new();
     level->enemies = ptr_array_new();
     level->terrain = ptr_array_new();
+    level->snails = ptr_array_new();
     
     if (!root) {
         fprintf(stderr, "error on line %d: %s\n", error.line, error.text);
@@ -103,6 +105,70 @@ level_t* level_parse(const char *filename) {
     }
     
     level->height = json_number_value(height_obj);
+    
+    json_t *snails = json_object_get(root, "snails");
+    
+    if (!json_is_array(snails)) {
+        fprintf(stderr, "\"snails\" is not an array\n");
+        parse_error = true;
+        goto root_lbl;
+    }
+    
+    for (size_t i = 0; i < json_array_size(snails); i++) {
+        json_t *snail_obj = json_array_get(snails, i);
+        
+        if (! json_is_object(snail_obj)) {
+            fprintf(stderr, "snail is not an object\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        json_t *type_obj, *x_obj, *y_obj;
+        const char *type_str;
+        snail_type_t type;
+        double x, y;
+        
+        type_obj = json_object_get(snail_obj, "type");
+        if (!json_is_string(type_obj)) {
+            fprintf(stderr, "\"type\" is not a string\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        type_str = json_string_value(type_obj);
+        if (!strcmp(type_str, "normal")) {
+            type = SNAIL_TYPE_NORMAL;
+        } else {
+            fprintf(stderr, "\"type\" is not a valid snail type\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        x_obj = json_object_get(snail_obj, "x");
+        if (!json_is_number(x_obj)) {
+            fprintf(stderr, "\"x\" is not a number\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        x = json_number_value(x_obj);
+        
+        y_obj = json_object_get(snail_obj, "y");
+        if (!json_is_number(y_obj)) {
+            fprintf(stderr, "\"y\" is not a number\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        y = json_number_value(y_obj);
+        
+        snail_t *snail = malloc(sizeof(snail_t));
+        snail->type = type;
+        snail->x = x;
+        snail->y = y;
+        
+        ptr_array_add(level->snails, snail);
+    }
     
     json_t *obstacles = json_object_get(root, "obstacles");
     

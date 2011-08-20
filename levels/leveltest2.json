@@ -3,6 +3,13 @@
     "num": 2,
     "width": 640,
     "height": 480,
+    "snails": [
+        {
+            "type": "normal",
+            "x": 100,
+            "y": 425
+        }
+    ],
     "obstacles": [
         {
             "type": "block",

@@ -37,6 +37,11 @@ typedef struct {
     cpFloat damage;
 } body_t;
 
+typedef struct {
+    ALLEGRO_TIMER *timer;
+    cpVect pos;
+} poof_t;
+
 enum {
     COLLISION_TYPE_SNAIL = 1,
     COLLISION_TYPE_SLINGSHOT,
@@ -54,13 +59,24 @@ cpConstraint *spring;
 ALLEGRO_BITMAP *scene;
 ALLEGRO_BITMAP *terrain_bitmap;
 ALLEGRO_FONT *font;
+ALLEGRO_EVENT_QUEUE *event_queue;
 uint32_t score;
 body_t *slingshot, *ground;
 table_t *textures;
 ptr_array_t *snails;
 ptr_array_t *obstacles;
 ptr_array_t *enemies;
+ptr_array_t *poofs;
 bool victorious;
+
+poof_t* poof_new(cpVect pos) {
+    poof_t *poof = calloc(1, sizeof(poof_t));
+    poof->timer = al_create_timer(0.5);
+    al_register_event_source(event_queue, al_get_timer_event_source(poof->timer));
+    al_start_timer(poof->timer);
+    poof->pos = pos;
+    return poof;
+}
 
 body_t* body_new(void) {
     return calloc(1, sizeof(body_t));
@@ -95,12 +111,16 @@ void destroyable_collision_post_step(cpSpace *space, void *obj, void *data) {
         return;
     body_remove(body);
     if (body->type == BODY_TYPE_ENEMY) {
-        ptr_array_remove(enemies, body);
         score += 1000;
+        poof_t *poof = poof_new(cpBodyGetPos(body->body));
+        ptr_array_add(poofs, poof);
+        ptr_array_remove(enemies, body);
         if (!enemies->len)
             victorious = true;
     } else if (body->type == BODY_TYPE_OBSTACLE) {
         score += 200;
+        poof_t *poof = poof_new(cpBodyGetPos(body->body));
+        ptr_array_add(poofs, poof);
         ptr_array_remove(obstacles, body);
     }
     
@@ -217,6 +237,7 @@ void init_bodies(level_t *level) {
     snails = ptr_array_new();
     obstacles = ptr_array_new();
     enemies = ptr_array_new();
+    poofs = ptr_array_new();
     
     cpShapeSetCollisionType(slingshot->shape, COLLISION_TYPE_SLINGSHOT);
     
@@ -378,7 +399,11 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
         al_draw_rotated_bitmap(body->bitmap, 15, 15, pos.x, pos.y, angle, 0);
     }
     
-
+    for (uint32_t i = 0; i < poofs->len; i++) {
+        poof_t *poof = ptr_array_index(poofs, i);
+        al_draw_scaled_bitmap(table_lookup(textures, "poof"), 0, 0, 120, 120,
+                              poof->pos.x - 15, poof->pos.y - 15, 30, 30, 0);
+    }
     al_set_target_backbuffer(display);
     al_identity_transform(&trans);
     al_translate_transform(&trans, -view.pan_x, -2 * (HEIGHT - view.pan_y) * view.zoom);
@@ -395,6 +420,26 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
                  score_text);
     
     al_flip_display();
+}
+
+void physics_step(body_t *snail) {
+    cpSpaceStep(space, PHYSICS_STEP);
+    if (cpBodyIsSleeping(snail->body)) {
+        poof_t *poof = poof_new(cpBodyGetPos(snail->body));
+        ptr_array_add(poofs, poof);
+        cpSpaceRemoveShape(space, snail->shape);
+        cpSpaceRemoveBody(space, snail->body);
+        ptr_array_remove(snails, snail);
+    }
+}
+
+void poofs_handle(poof_t *poof) {
+    al_stop_timer(poof->timer);
+    al_unregister_event_source(event_queue,
+                               al_get_timer_event_source(poof->timer));
+    al_destroy_timer(poof->timer);
+    ptr_array_remove(poofs, poof);
+    free(poof);
 }
 
 void level_play(level_t *level, ALLEGRO_DISPLAY *display, 
@@ -449,17 +494,19 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
                 running = false;
                 break;
             case ALLEGRO_EVENT_TIMER:
+            {
+                poof_t *poof;
+                if (poofs->len)
+                    poof = ptr_array_index(poofs, 0);
                 if (ev.timer.source == phys_timer) {
-                    cpSpaceStep(space, PHYSICS_STEP);
-                    if (cpBodyIsSleeping(snail->body)) {
-                        cpSpaceRemoveShape(space, snail->shape);
-                        cpSpaceRemoveBody(space, snail->body);
-                        ptr_array_remove(snails, snail);
-                    }
-                }
-                else if (ev.timer.source == frames_timer)
+                    physics_step(snail);
+                } else if (ev.timer.source == frames_timer) {
                     draw_frame(display);
+                } else if (poofs->len && ev.timer.source == poof->timer) {
+                    poofs_handle(poof);
+                }
                 break;
+            }
             case ALLEGRO_EVENT_KEY_DOWN:
                 switch (ev.keyboard.keycode) {
                     case ALLEGRO_KEY_ESCAPE:
@@ -529,7 +576,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
                 if (ev.mouse.dz)
                     view.pan_y += ev.mouse.dz * 10;
                 if (ev.mouse.dw)
-                    view.pan_x += ev.mouse.dw * 10;
+                    view.pan_x = MAX(0, view.pan_x + ev.mouse.dw * 10);
                 if (pressed) {
                     cpBodySetPos(mouse_body, cpv(ev.mouse.x, ev.mouse.y));
                 }
@@ -578,7 +625,7 @@ int main(int argc, char **argv) {
     ALLEGRO_DISPLAY *display = al_create_display(WIDTH, HEIGHT);
     al_set_window_title(display, "discontent snails");
     al_set_app_name("discontent-snails");
-    ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
+    event_queue = al_create_event_queue();
     
     al_init_image_addon();
     al_init_primitives_addon();

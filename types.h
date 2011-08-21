@@ -11,6 +11,12 @@ typedef struct {
 
 typedef struct {
     uint32_t len;
+    size_t size;
+    void *data;
+} dyn_array_t;
+
+typedef struct {
+    uint32_t len;
     char **keys;
     void **vals;
 } table_t;

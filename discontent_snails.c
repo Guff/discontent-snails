@@ -53,6 +53,8 @@ cpSpace *space;
 cpConstraint *spring;
 ALLEGRO_BITMAP *scene;
 ALLEGRO_BITMAP *terrain_bitmap;
+ALLEGRO_FONT *font;
+uint32_t score;
 body_t *slingshot, *ground;
 table_t *textures;
 ptr_array_t *snails;
@@ -94,10 +96,13 @@ void destroyable_collision_post_step(cpSpace *space, void *obj, void *data) {
     body_remove(body);
     if (body->type == BODY_TYPE_ENEMY) {
         ptr_array_remove(enemies, body);
+        score += 1000;
         if (!enemies->len)
             victorious = true;
-    } else if (body->type == BODY_TYPE_OBSTACLE)
+    } else if (body->type == BODY_TYPE_OBSTACLE) {
+        score += 200;
         ptr_array_remove(obstacles, body);
+    }
     
     //body_free(body, true);
 }
@@ -110,7 +115,7 @@ void destroyable_collision_post_solve(cpArbiter *arb, cpSpace *space, void *data
     if (!body || body->type != BODY_TYPE_OBSTACLE || body->type != BODY_TYPE_ENEMY)
         body = cpShapeGetUserData(b);
     cpVect impulse = cpArbiterTotalImpulseWithFriction(arb);
-    body->damage += MAX(cpvlength(impulse) - 250, 0) / 100;
+    body->damage += MAX(cpvlength(impulse) - 250, 0) / 20;
     
     if (body->damage >= 1) {
         cpSpaceAddPostStepCallback(space, destroyable_collision_post_step, arb,
@@ -373,6 +378,7 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
         al_draw_rotated_bitmap(body->bitmap, 15, 15, pos.x, pos.y, angle, 0);
     }
     
+
     al_set_target_backbuffer(display);
     al_identity_transform(&trans);
     al_translate_transform(&trans, -view.pan_x, -2 * (HEIGHT - view.pan_y) * view.zoom);
@@ -380,6 +386,13 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
     al_use_transform(&trans);
     al_clear_to_color(al_map_rgb(0, 0, 0));
     al_draw_bitmap(scene, 0, 0, 0);
+    
+    al_identity_transform(&trans);
+    al_use_transform(&trans);
+    char score_text[11];
+    snprintf(score_text, 11, "%u", score);
+    al_draw_text(font, al_map_rgb(255, 255, 255), 0, 0, 0,
+                 score_text);
     
     al_flip_display();
 }
@@ -397,6 +410,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
     view.zoom = 1;
     view.pan_x = 0;
     view.pan_y = 0;
+    score = 0;
     
     ALLEGRO_EVENT ev;
     
@@ -570,6 +584,8 @@ int main(int argc, char **argv) {
     al_init_primitives_addon();
     al_init_font_addon();
     al_init_ttf_addon();
+    
+    font = al_load_font("data/DejaVuSans.ttf", 12, 0);
     
     al_install_keyboard();
     al_install_mouse();

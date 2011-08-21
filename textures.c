@@ -6,7 +6,7 @@
 
 const char * const texture_files[] = { "wooden-block-50x10", "snail-normal",
                                        "ground", "menu-bg", "sky-bg",
-                                       "slingshot", "stone" };
+                                       "slingshot", "stone", "snail-poof" };
 
 table_t *textures_load(void) {
     table_t *textures = table_new();

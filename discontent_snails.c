@@ -389,6 +389,13 @@ void draw_frame(ALLEGRO_DISPLAY *display) {
         body_t *body = ptr_array_index(obstacles, i);
         cpVect pos = cpBodyGetPos(body->body);
         cpFloat angle = cpBodyGetAngle(body->body);
+        if (body->damage > 0.1) {
+            al_set_target_bitmap(body->bitmap);
+            al_clear_to_color(al_map_rgba(0, 0, 0, 0));
+            al_draw_scaled_bitmap(table_lookup(textures, "wooden-block-50x10-damage1"),
+                                  0, 0, 200, 40, 0, 0, 50, 10, 0);
+            al_set_target_bitmap(scene);
+        }
         al_draw_rotated_bitmap(body->bitmap, 25, 5, pos.x, pos.y, angle, 0);
     }
     

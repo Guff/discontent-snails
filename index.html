@@ -11,56 +11,76 @@
 <body onload="initEditor();">
 <div id="levelText">
 <form name="levelJSON">
-<textarea name="levelJSONtext" id="levelJSONtext" cols="40" rows="30">{
+<textarea name="levelJSONtext" id="levelJSONtext">{
     "name": "Test level",
     "num": 1,
     "width": 640,
     "height": 480,
+    "snails": [
+        {
+            "type": "normal",
+            "x": 100,
+            "y": 425
+        },
+        {
+            "type": "normal",
+            "x": 70,
+            "y": 425
+        }
+    ],
     "obstacles": [
         {
-            "type": "block",
+            "shape": "rect",
+            "type": "wood",
             "x": 425,
             "y": 325,
             "angle": 0
         },
         {
-            "type": "block",
+            "shape": "rect",
+            "type": "wood",
             "x": 378,
             "y": 415,
             "angle": 90
         },
         {
-            "type": "block",
+            "shape": "rect",
+            "type": "wood",
             "x": 402,
             "y": 355,
             "angle": 90
         },
         {
-            "type": "block",
+            "shape": "rect",
+            "type": "wood",
             "x": 452,
             "y": 385,
             "angle": 0
         },
         {
-            "type": "block",
+            "shape": "rect",
+            "type": "wood",
             "x": 402,
             "y": 385,
             "angle": 0
         },
         {
-            "type": "block",
+            "shape": "rect",
+            "type": "wood",
             "x": 425,
             "y": 415,
             "angle": 90
         },
         {
-            "type": "block",
+            "shape": "rect",
+            "type": "wood",
             "x": 448,
             "y": 355,
             "angle": 90
         },
         {
-            "type": "block",
+            "shape": "rect",
+            "type": "wood",
             "x": 475,
             "y": 415,
             "angle": 90
@@ -121,7 +141,9 @@
     <input type="text" id="angleInput" hidden="true"></input>
 </div>
 <div id="images">
-<img src="data/wooden-block-50x10.png" id="block" />
+<img src="data/wooden-block-50x10.png" id="woodRect" />
+<img src="data/stone-block-50x10.png" id="stoneRect" />
+<img src="data/glass-block-50x10.png" id="glassRect" />
 <img src="data/slingshot.png" id="slingshot" />
 <img src="data/sky-bg.png" id="bg" />
 <img src="data/ground.png" id="ground" />

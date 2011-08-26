@@ -37,10 +37,19 @@ typedef struct {
 } snail_t;
 
 typedef enum {
-    OBSTACLE_TYPE_BLOCK
+    OBSTACLE_SHAPE_RECT,
+    OBSTACLE_SHAPE_CIRCLE,
+    OBSTACLE_SHAPE_TRIANGLE
+} obstacle_shape_t;
+
+typedef enum {
+    OBSTACLE_TYPE_WOOD,
+    OBSTACLE_TYPE_STONE,
+    OBSTACLE_TYPE_GLASS
 } obstacle_type_t;
 
 typedef struct {
+    obstacle_shape_t shape;
     obstacle_type_t type;
     
     double x, y;

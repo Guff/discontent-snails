@@ -10,6 +10,10 @@ ptr_array_t* ptr_array_new(void) {
     return pta;
 }
 
+void* ptr_array_index(ptr_array_t *pta, uint n) {
+    return (n < pta->len) ? pta->data[n] : NULL;
+}
+
 void ptr_array_add(ptr_array_t *pta, void *ptr) {
     if (!pta->len)
         pta->data = malloc(sizeof(void *));

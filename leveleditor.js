@@ -26,7 +26,9 @@ function initEditor() {
     //updateHistory();
     
     textures = {};
-    textures.block     = document.getElementById("block");
+    textures.woodRect  = document.getElementById("woodRect");
+    textures.stoneRect = document.getElementById("stoneRect");
+    textures.glassRect = document.getElementById("glassRect");
     textures.slingshot = document.getElementById("slingshot");
     textures.bg        = document.getElementById("bg");
     textures.ground    = document.getElementById("ground");
@@ -599,7 +601,21 @@ function drawBody(ctx, body) {
     ctx.translate(body.x, body.y);
     ctx.rotate(deg2rad(body.angle));
     ctx.scale(0.25, 0.25);
-    ctx.drawImage(textures.block, -100, -20);
+    var texture;
+    switch (body.type) {
+        case "wood":
+            texture = textures.woodRect;
+            break;
+        case "stone":
+            texture = textures.stoneRect;
+            break;
+        case "glass":
+            texture = textures.glassRect;
+            break;
+        default:
+            break;
+    }
+    ctx.drawImage(texture, -100, -20);
     ctx.restore();
 }
 

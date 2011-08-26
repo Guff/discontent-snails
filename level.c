@@ -187,10 +187,32 @@ level_t* level_parse(const char *filename) {
             goto root_lbl;
         }
         
-        json_t *type_obj, *x_obj, *y_obj, *angle_obj;
-        const char *type_str;
+        json_t *shape_obj, *type_obj, *x_obj, *y_obj, *angle_obj;
+        const char *shape_str, *type_str;
+        obstacle_shape_t shape;
         obstacle_type_t type;
         double x, y, angle;
+        
+        shape_obj = json_object_get(obstacle_obj, "shape");
+        if (!json_is_string(shape_obj)) {
+            fprintf(stderr, "\"type\" is not a string\n");
+            parse_error = true;
+            goto root_lbl;
+        }
+        
+        shape_str = json_string_value(shape_obj);
+        
+        if (!strcmp(shape_str, "rect")) {
+            shape = OBSTACLE_SHAPE_RECT;
+        } else if (!strcmp(shape_str, "circle")) {
+            shape = OBSTACLE_SHAPE_CIRCLE;
+        } else if (!strcmp(shape_str, "triangle")) {
+            shape = OBSTACLE_SHAPE_TRIANGLE;
+        } else {
+            fprintf(stderr, "\"shape\" not a valid obstacle type\n");
+            parse_error = true;
+            goto root_lbl;
+        }
         
         type_obj = json_object_get(obstacle_obj, "type");
         if (!json_is_string(type_obj)) {
@@ -201,8 +223,12 @@ level_t* level_parse(const char *filename) {
         
         type_str = json_string_value(type_obj);
         
-        if (!strcmp(type_str, "block")) {
-            type = OBSTACLE_TYPE_BLOCK;
+        if (!strcmp(type_str, "wood")) {
+            type = OBSTACLE_TYPE_WOOD;
+        } else if (!strcmp(type_str, "stone")) {
+            type = OBSTACLE_TYPE_STONE;
+        } else if (!strcmp(type_str, "glass")) {
+            type = OBSTACLE_TYPE_GLASS;
         } else {
             fprintf(stderr, "\"type\" not a valid obstacle type\n");
             parse_error = true;
@@ -237,6 +263,7 @@ level_t* level_parse(const char *filename) {
         angle = json_number_value(angle_obj);
         
         obstacle_t *obstacle = malloc(sizeof(obstacle_t));
+        obstacle->shape = shape;
         obstacle->type  = type;
         obstacle->x     = x;
         obstacle->y     = y;

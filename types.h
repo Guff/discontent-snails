@@ -21,8 +21,8 @@ typedef struct {
     void **vals;
 } table_t;
 
-#define ptr_array_index(pta, n) (pta)->data[n]
 ptr_array_t* ptr_array_new();
+void* ptr_array_index(ptr_array_t *pta, uint n);
 void ptr_array_add(ptr_array_t *pta, void *ptr);
 void ptr_array_clear(ptr_array_t *pta);
 void ptr_array_remove(ptr_array_t *pta, void *ptr);

@@ -6,6 +6,8 @@
 
 const char * const texture_files[] = { "wooden-block-50x10",
                                        "wooden-block-50x10-damage1",
+                                       "stone-block-50x10",
+                                       "glass-block-50x10",
                                        "snail-normal",
                                        "ground", "menu-bg", "sky-bg",
                                        "slingshot", "stone", "poof" };

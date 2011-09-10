@@ -303,7 +303,7 @@ void bodies_init(level_t *level) {
     enemies_init(level->enemies);
 }
 
-void physics_step() {
+void physics_step(void) {
     cpSpaceStep(state.space, PHYSICS_STEP);
     
     for (uint i = 0; i < state.snails->len; i++) {
@@ -388,7 +388,7 @@ void level_play(level_t *level, ALLEGRO_DISPLAY *display,
                 if (state.poofs->len)
                     poof = ptr_array_index(state.poofs, 0);
                 if (ev.timer.source == phys_timer) {
-                    physics_step(snail);
+                    physics_step();
                 } else if (ev.timer.source == frames_timer) {
                     draw_frame(display, state.scene, state);
                 } else if (state.poofs->len && ev.timer.source == poof->timer) {

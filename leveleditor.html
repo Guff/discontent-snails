@@ -10,7 +10,7 @@
 </head>
 <body onload="initEditor();">
 <div id="levelText">
-<form name="levelJSON">
+<form name="levelJSON" action="upload" method="post">
 <textarea name="levelJSONtext" id="levelJSONtext">{
     "name": "Test level",
     "num": 1,
@@ -123,9 +123,10 @@
         }
     ]
 }</textarea>
-<br>
+<br />
 <button type="button" id="updateButton" onclick="updateLevel();">update</button>
 <input type="file" id="fileInput" onchange="handleFile(this.files)" />
+<input type="submit" />
 </form>
 </div>
 <div id="levelEditor">

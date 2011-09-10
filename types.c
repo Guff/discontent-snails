@@ -10,7 +10,7 @@ ptr_array_t* ptr_array_new(void) {
     return pta;
 }
 
-void* ptr_array_index(ptr_array_t *pta, uint n) {
+void* ptr_array_index(ptr_array_t *pta, uint32_t n) {
     return (n < pta->len) ? pta->data[n] : NULL;
 }
 
@@ -30,9 +30,9 @@ void ptr_array_clear(ptr_array_t *pta) {
 }
 
 void ptr_array_remove(ptr_array_t *pta, void *ptr) {
-    for (uint i = 0; i < pta->len; i++) {
+    for (uint32_t i = 0; i < pta->len; i++) {
         if (ptr_array_index(pta, i) == ptr) {
-            for (uint j = i; j < pta->len - 1; j++)
+            for (uint32_t j = i; j < pta->len - 1; j++)
                 pta->data[j] = pta->data[j + 1];
             pta->len--;
             break;
@@ -72,7 +72,7 @@ void table_insert(table_t *tbl, const char *key, void *val) {
 }
 
 void* table_lookup(table_t *tbl, const char *key) {
-    for (uint i = 0; i < tbl->len; i++) {
+    for (uint32_t i = 0; i < tbl->len; i++) {
         if (!strcmp(tbl->keys[i], key))
             return tbl->vals[i];
     }
@@ -81,7 +81,7 @@ void* table_lookup(table_t *tbl, const char *key) {
 
 void table_clear(table_t *tbl, bool free_all) {
     if (free_all) {
-        for (uint i = 0; i < tbl->len; i++)
+        for (uint32_t i = 0; i < tbl->len; i++)
             free(tbl->keys[i]);
     }
     
